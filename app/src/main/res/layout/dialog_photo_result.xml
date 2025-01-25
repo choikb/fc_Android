@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+
+    android:background="@android:color/white">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="영상 편집"
+
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp" />
+
+    <!-- 1. 이미지 영역 -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+
+        android:layout_marginBottom="16dp">
+
+        <ImageView
+            android:id="@+id/imageViewPhoto"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scaleType="centerCrop"
+            android:background="@android:color/white" />
+
+        <com.example.myapplication.DrawView
+            android:id="@+id/drawView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </FrameLayout>
+
+    <!-- 2~9. 이미지 관리 영역 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginBottom="16dp"
+        android:gravity="center">
+
+        <ImageButton
+            android:id="@+id/buttonAddText"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_add_text"
+            android:contentDescription="텍스트 추가"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:layout_margin="4dp" />
+
+        <ImageButton
+            android:id="@+id/buttonAddIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_add_icon"
+            android:contentDescription="아이콘 추가"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:layout_margin="4dp" />
+
+        <ImageButton
+            android:id="@+id/buttonAddShape"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_add_shape"
+            android:contentDescription="도형 추가"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:layout_margin="4dp" />
+
+        <ImageButton
+            android:id="@+id/buttonDraw"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_draw"
+            android:contentDescription="그리기"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:layout_margin="4dp" />
+
+        <ImageButton
+            android:id="@+id/buttonUndo"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_undo"
+            android:contentDescription="뒤로 가기"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:layout_margin="4dp" />
+
+        <ImageButton
+            android:id="@+id/buttonRedo"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_redo"
+            android:contentDescription="앞으로 가기"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:layout_margin="4dp" />
+
+        <ImageButton
+            android:id="@+id/buttonClear"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:src="@drawable/ic_clear"
+            android:contentDescription="초기화"
+            android:background="?android:attr/selectableItemBackground"
+            android:scaleType="fitCenter"
+            android:layout_margin="4dp" />
+    </LinearLayout>
+
+    <!-- 메모 입력 영역 -->
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="메모"
+        android:textSize="18sp"
+        android:layout_marginBottom="8dp" />
+
+    <EditText
+        android:id="@+id/editTextMemo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="메모를 입력하세요"
+        android:textSize="16sp"
+        android:layout_marginBottom="16dp"
+        android:minLines="2" />
+
+    <!-- 버튼 영역 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center">
+
+        <Button
+            android:id="@+id/buttonCancel"
+            android:layout_width="0dp"
+            android:layout_height="112dp"
+            android:layout_weight="1"
+            android:text="취소"
+            android:textSize="25sp"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:layout_marginEnd="8dp"
+            android:elevation="4dp" />
+        <Button
+            android:id="@+id/buttonSave"
+            android:layout_width="0dp"
+            android:layout_height="112dp"
+            android:layout_weight="1"
+            android:text="저장"
+            android:textSize="25sp"
+            android:backgroundTint="#03A9F4"
+            android:textColor="#FFFFFF"
+            android:elevation="4dp" />
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
+
+        <!-- 로고 -->
+        <ImageView
+            android:id="@+id/imageView"
+            android:layout_width="182dp"
+            android:layout_height="150dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="App Logo"
+            android:src="@drawable/logo1" />
+
+        <!-- 시도 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="시도"
+                android:textSize="18sp"
+                android:gravity="center_vertical" />
+
+            <Spinner
+                android:id="@+id/spinnerCity"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="3"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:gravity="center_vertical" />
+        </LinearLayout>
+
+        <!-- 소방서 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="소방서"
+                android:textSize="18sp"
+                android:gravity="center_vertical" />
+
+            <Spinner
+                android:id="@+id/spinnerFireStation"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="3"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:gravity="center_vertical" />
+        </LinearLayout>
+
+        <!-- 센터 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="센터"
+                android:textSize="18sp"
+                android:gravity="center_vertical" />
+
+            <Spinner
+                android:id="@+id/spinnerCenter"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="3"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:gravity="center_vertical" />
+        </LinearLayout>
+
+        <!-- 지역대 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="지역대"
+                android:textSize="18sp"
+                android:gravity="center_vertical" />
+
+            <Spinner
+                android:id="@+id/spinnerRegion"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_weight="3"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:gravity="center_vertical" />
+        </LinearLayout>
+
+        <!-- 사건명 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/border"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <RadioGroup
+                android:id="@+id/radioGroupCase"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <RadioButton
+                    android:id="@+id/radioNewCase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="신규 입력"
+                    android:textSize="18sp"
+                    android:checked="true" />
+
+                <RadioButton
+                    android:id="@+id/radioExistingCase"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="기존 선택"
+                    android:textSize="18sp" />
+            </RadioGroup>
+
+            <EditText
+                android:id="@+id/editTextNewCase"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="신규 사건명 입력"
+                android:textSize="16sp" />
+
+            <Spinner
+                android:id="@+id/spinnerExistingCase"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:enabled="false" />
+        </LinearLayout>
+
+        <!-- 사건조사팀 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="화재조사팀"
+            android:gravity="center"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp" />
+
+        <!-- 로그인 버튼 -->
+        <Button
+            android:id="@+id/buttonLogin"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="로그인"
+            android:textSize="25sp"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:layout_marginEnd="8dp"
+            android:elevation="4dp" />
+
+
+    </LinearLayout>
+</ScrollView>

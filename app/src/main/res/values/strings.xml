@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">My Application</string>
+    <string name="app_logo">App Logo</string>
+    <string name="media_item">Media Item</string>
+</resources>

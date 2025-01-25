@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp">
+
+    <!-- 미디어 필터(전체 / 사진 / 동영상) -->
+    <RadioGroup
+        android:id="@+id/radioGroupMediaFilter"
+
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal">
+
+        <RadioButton
+            android:id="@+id/radioButtonAll"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="전체 보기"
+            android:checked="true" />
+
+        <RadioButton
+            android:id="@+id/radioButtonPhoto"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="사진만" />
+
+        <RadioButton
+            android:id="@+id/radioButtonVideo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="동영상만" />
+    </RadioGroup>
+
+    <!-- 그리드뷰: 미디어 목록(사진/동영상) 표시 -->
+    <GridView
+        android:id="@+id/gridViewMedia"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:numColumns="3"
+        android:choiceMode="multipleChoiceModal" />
+
+    <!-- 전체선택 버튼 -->
+    <Button
+        android:id="@+id/buttonSelectAll"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="전체선택" />
+
+    <!-- 메모 입력 -->
+    <EditText
+        android:id="@+id/editTextMemo"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="메모 입력" />
+
+    <!-- 업로드 버튼 -->
+    <Button
+        android:id="@+id/buttonUpload"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="업로드" />
+
+    <!-- 하단: 화면 이동용 버튼들 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingTop="8dp">
+
+        <!-- 촬영 화면으로 이동 버튼 -->
+        <Button
+            android:id="@+id/buttonGoCapture"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="촬영 화면" />
+
+        <!-- 메인 메뉴로 이동 버튼 -->
+        <Button
+            android:id="@+id/buttonGoMainMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="메인 메뉴" />
+    </LinearLayout>
+
+</LinearLayout>

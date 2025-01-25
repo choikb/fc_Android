@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string-array name="affiliation_array">
+        <item>소속 1</item>
+        <item>소속 2</item>
+        <item>소속 3</item>
+    </string-array>
+
+    <string-array name="rank_array">
+        <item>계급 1</item>
+        <item>계급 2</item>
+        <item>계급 3</item>
+    </string-array>
+
+    <string-array name="name_array">
+        <item>성명 1</item>
+        <item>성명 2</item>
+        <item>성명 3</item>
+    </string-array>
+
+    <string-array name="existing_cases_array">
+        <item>기존 사건 1</item>
+        <item>기존 사건 2</item>
+        <item>기존 사건 3</item>
+    </string-array>
+
+</resources>
