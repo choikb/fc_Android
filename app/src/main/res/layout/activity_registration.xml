@@ -1,57 +1,114 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    android:padding="16dp"
+    android:background="#F5F5F5">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
 
+
+
+        <!-- 제목 추가 -->
         <TextView
+            android:id="@+id/textViewTitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="사용자 등록"
-            android:textSize="20sp"
+            android:text="사용자 정보 등록"
+            android:textSize="26sp"
+            android:textColor="#333333"
             android:textStyle="bold"
-            android:layout_marginBottom="16dp" />
+            android:gravity="center"
+            android:paddingTop="56dp"
+            android:paddingBottom="56dp"
+            android:layout_marginTop="10dp"/>
 
-        <Spinner
-            android:id="@+id/spinnerCity"
+
+        <!-- 디바이스 ID 표시 -->
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp" />
+            android:orientation="vertical"
+            android:background="@drawable/border"
+            android:padding="16dp"
+            android:layout_marginBottom="24dp"
+            android:elevation="4dp">
 
-        <Spinner
-            android:id="@+id/spinnerFireStation"
-            android:layout_width="match_parent"
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="디바이스 ID"
+                android:textAlignment="center"
+                android:textSize="18sp"
+                android:textColor="#666666"
+                android:paddingBottom="4dp" />
+
+            <TextView
+                android:id="@+id/textDeviceId"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="디바이스 ID 로드 중..."
+                android:textSize="16sp"
+                android:textAlignment="center"
+                android:padding="8dp"
+                android:background="@android:color/darker_gray"
+                android:textColor="@android:color/white"
+                android:gravity="center" />
+        </LinearLayout>
+
+        <!-- "화재조사팀" 라벨 추가 -->
+        <TextView
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp" />
+            android:text="[ 화재조사팀 ]"
+            android:textSize="25sp"
+            android:textColor="#000000"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginTop="36dp"
+            android:layout_marginBottom="26dp"
+            android:layout_gravity="center_horizontal"/>
 
-        <Spinner
-            android:id="@+id/spinnerCenter"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp" />
-
-        <Spinner
-            android:id="@+id/spinnerRegion"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="8dp" />
-
+        <!-- 사용자명 입력 -->
         <EditText
-            android:id="@+id/editTextTeamName"
+            android:id="@+id/editTextUserName"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="팀명 입력"
-            android:layout_marginBottom="16dp" />
+            android:hint="사용자명을 입력하세요"
+            android:textSize="16sp"
+            android:padding="10dp"
+            android:background="@android:color/white"
+            android:layout_marginBottom="1dp"
+            android:inputType="textPersonName" />
 
+        <!-- 등록 버튼 -->
         <Button
             android:id="@+id/buttonRegister"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="등록" />
+            android:layout_height="80dp"
+            android:text="사용자 등록"
+            android:textSize="18sp"
+            android:padding="12dp"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="10dp"
+            android:elevation="4dp" />
+
+        <!-- 로그아웃 버튼 -->
+        <Button
+            android:id="@+id/buttonLogout"
+            android:layout_width="match_parent"
+            android:layout_height="50dp"
+            android:text="취소"
+            android:textSize="18sp"
+            android:backgroundTint="#F44336"
+            android:textColor="#FFFFFF"
+            android:layout_marginTop="24dp"
+            android:elevation="4dp" />
     </LinearLayout>
 </ScrollView>

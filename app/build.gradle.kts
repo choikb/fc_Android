@@ -110,6 +110,11 @@ android {
     }
 }
 dependencies {
+    implementation(libs.okhttp)
+    implementation(libs.gson)
+    implementation(libs.bouncycastle)
+    implementation(libs.androidx.core.ktx)
+
     // Core 및 Compose
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
@@ -120,6 +125,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
+
+    implementation(libs.mysql.connector.java)
 
     // CameraX 라이브러리
     implementation(libs.androidx.camera.core)
@@ -132,7 +139,8 @@ dependencies {
     implementation(libs.play.services.location)
 
     implementation(libs.glide)
-    implementation(libs.androidx.preference.ktx) // Glide 라이브러리
+    implementation(libs.androidx.preference.ktx)
+    implementation(libs.androidx.espresso.core) // Glide 라이브러리
     kapt(libs.glide.compiler)  // Annotation Processor (Kapt)
 
     // 테스트 라이브러리
