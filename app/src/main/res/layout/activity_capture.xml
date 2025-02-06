@@ -2,8 +2,10 @@
 <androidx.constraintlayout.widget.ConstraintLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    tools:context=".CaptureActivity">
 
     <!-- 카메라 프리뷰 -->
     <androidx.camera.view.PreviewView
@@ -11,7 +13,9 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toTopOf="@id/zoomSeekBar" />
+        app:layout_constraintBottom_toTopOf="@id/zoomSeekBar"
+        tools:visibility="gone"/>  <!-- 🔹 미리보기에서는 안보이게 설정 -->
+
 
     <!-- 확대/축소 SeekBar -->
     <SeekBar
@@ -26,20 +30,28 @@
     <!-- 촬영 버튼 -->
     <Button
         android:id="@+id/buttonCapture"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="촬영"
+        android:textSize="25sp"
+        android:backgroundTint="#4CAF50"
+        android:textColor="#FFFFFF"
+        android:layout_marginEnd="1dp"
+        android:elevation="4dp"
         app:layout_constraintBottom_toTopOf="@id/buttonGoMainMenu"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+    <!-- 시작 버튼 -->
 
     <!-- 메인 메뉴 버튼 -->
     <Button
         android:id="@+id/buttonGoMainMenu"
-        android:layout_width="wrap_content"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="메인 메뉴"
+        android:layout_marginEnd="1dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent" />
+
 </androidx.constraintlayout.widget.ConstraintLayout>

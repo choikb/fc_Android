@@ -1,3 +1,4 @@
+<!--
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -18,4 +19,49 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:textSize="14sp" />
+</LinearLayout>
+-->
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/layoutContainer"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="8dp">
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="80dp"
+        android:layout_height="80dp"
+        android:layout_gravity="center"
+        android:scaleType="fitCenter" />
+
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Media Name"
+        android:gravity="center"
+        android:padding="4dp" />
+
+    <TextView
+        android:id="@+id/textViewFolderDate"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center"
+        android:text="23년4월0일"
+        android:textSize="12sp"
+        android:textColor="#757575" />
+
+    <TextView
+        android:id="@+id/textViewFolderCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center"
+        android:text="0개"
+        android:textSize="12sp"
+        android:textColor="#757575" />
+
 </LinearLayout>

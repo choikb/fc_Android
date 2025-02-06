@@ -52,14 +52,17 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
+import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 
@@ -67,15 +70,21 @@ class MainActivity : AppCompatActivity() {
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private var mediaUri: Uri? = null
 
+    // 요청할 모든 권한 목록 (Android 13 이상 & 이하 버전 대응)
+
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
             super.onCreate(savedInstanceState)
             setContentView(R.layout.activity_main)
 
-        ActivityCompat.requestPermissions(this, arrayOf(
-            Manifest.permission.CAMERA,
-            Manifest.permission.WRITE_EXTERNAL_STORAGE,
-            Manifest.permission.ACCESS_FINE_LOCATION
-        ), 1)
+//        ActivityCompat.requestPermissions(this, arrayOf(
+//            Manifest.permission.CAMERA,
+//            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+//            Manifest.permission.READ_EXTERNAL_STORAGE,
+//            Manifest.permission.LOCATION_HARDWARE,
+//            Manifest.permission.ACCESS_FINE_LOCATION
+//        ), 1)
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
@@ -107,6 +116,7 @@ class MainActivity : AppCompatActivity() {
 
         }
     }
+
 
     private fun createImageUri(): Uri {
         val contentValues = android.content.ContentValues().apply {

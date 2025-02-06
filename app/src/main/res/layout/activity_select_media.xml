@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
@@ -6,85 +5,83 @@
     android:orientation="vertical"
     android:padding="16dp">
 
-    <!-- 미디어 필터(전체 / 사진 / 동영상) -->
+    <!-- 상위 폴더로 이동 아이콘 -->
+    <LinearLayout
+        android:id="@+id/layoutBackToFolders"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <ImageView
+            android:id="@+id/imageViewBack"
+            android:layout_width="35dp"
+            android:layout_height="35dp"
+            android:src="@drawable/ic_back"
+            android:contentDescription="Back to folders"
+            android:padding="1dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="폴더로 돌아가기"
+            android:textSize="15sp"
+            android:layout_gravity="center_vertical" />
+    </LinearLayout>
+
     <RadioGroup
-        android:id="@+id/radioGroupMediaFilter"
-
-
+        android:id="@+id/radioGroupFilter"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal">
 
         <RadioButton
-            android:id="@+id/radioButtonAll"
+            android:id="@+id/radioAll"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="전체 보기"
+            android:text="전체 보기" />
+
+        <RadioButton
+            android:id="@+id/radioUploaded"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="전송 완료"/>
+
+        <RadioButton
+            android:id="@+id/radioNotUploaded"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="미전송"
             android:checked="true" />
-
-        <RadioButton
-            android:id="@+id/radioButtonPhoto"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="사진만" />
-
-        <RadioButton
-            android:id="@+id/radioButtonVideo"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="동영상만" />
     </RadioGroup>
 
-    <!-- 그리드뷰: 미디어 목록(사진/동영상) 표시 -->
-    <GridView
-        android:id="@+id/gridViewMedia"
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/mediaRecyclerView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:numColumns="3"
-        android:choiceMode="multipleChoiceModal" />
-
-    <!-- 전체선택 버튼 -->
-    <Button
-        android:id="@+id/buttonSelectAll"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="전체선택" />
+        android:scrollbars="vertical" />
 
     <!-- 메모 입력 -->
     <EditText
-        android:id="@+id/editTextMemo"
+        android:id="@+id/memoEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="메모 입력" />
 
     <!-- 업로드 버튼 -->
     <Button
-        android:id="@+id/buttonUpload"
+        android:id="@+id/uploadButton"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="60dp"
+        android:backgroundTint="#4CAF50"
+        android:textColor="#FFFFFF"
+        android:textSize="22sp"
         android:text="업로드" />
-
-    <!-- 하단: 화면 이동용 버튼들 -->
-    <LinearLayout
+    <Button
+        android:id="@+id/buttonMainMenu"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:paddingTop="8dp">
-
-        <!-- 촬영 화면으로 이동 버튼 -->
-        <Button
-            android:id="@+id/buttonGoCapture"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="촬영 화면" />
-
-        <!-- 메인 메뉴로 이동 버튼 -->
-        <Button
-            android:id="@+id/buttonGoMainMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="메인 메뉴" />
-    </LinearLayout>
+        android:text="메인메뉴" />
 
 </LinearLayout>

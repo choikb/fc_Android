@@ -140,7 +140,8 @@ dependencies {
 
     implementation(libs.glide)
     implementation(libs.androidx.preference.ktx)
-    implementation(libs.androidx.espresso.core) // Glide 라이브러리
+    implementation(libs.androidx.espresso.core)
+    implementation(libs.androidx.recyclerview) // Glide 라이브러리
     kapt(libs.glide.compiler)  // Annotation Processor (Kapt)
 
     // 테스트 라이브러리

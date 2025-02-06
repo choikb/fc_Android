@@ -20,6 +20,7 @@
             android:contentDescription="App Logo"
             android:src="@drawable/logo1" />
 
+
         <!-- 시도 -->
         <LinearLayout
             android:layout_width="match_parent"
@@ -38,7 +39,7 @@
             <Spinner
                 android:id="@+id/spinnerCity"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="40dp"
                 android:layout_weight="3"
                 android:ellipsize="end"
                 android:maxLines="1"
@@ -63,7 +64,7 @@
             <Spinner
                 android:id="@+id/spinnerFireStation"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="40dp"
                 android:layout_weight="3"
                 android:ellipsize="end"
                 android:maxLines="1"
@@ -88,7 +89,7 @@
             <Spinner
                 android:id="@+id/spinnerCenter"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="40dp"
                 android:layout_weight="3"
                 android:ellipsize="end"
                 android:maxLines="1"
@@ -113,7 +114,7 @@
             <Spinner
                 android:id="@+id/spinnerRegion"
                 android:layout_width="0dp"
-                android:layout_height="48dp"
+                android:layout_height="40dp"
                 android:layout_weight="3"
                 android:ellipsize="end"
                 android:maxLines="1"
@@ -156,7 +157,8 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:hint="신규 사건명 입력"
-                android:textSize="16sp" />
+                android:textSize="16sp"
+                android:text="" />  <!-- 기존 입력된 데이터가 남지 않도록 초기화 -->
 
             <Spinner
                 android:id="@+id/spinnerExistingCase"
@@ -174,19 +176,28 @@
             android:textSize="20sp"
             android:textStyle="bold"
             android:layout_marginBottom="16dp" />
+        <!-- 사용자명 표시 -->
+        <TextView
+            android:id="@+id/textUserName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text=""
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
 
-        <!-- 로그인 버튼 -->
+        <!-- 시작 버튼 -->
         <Button
             android:id="@+id/buttonLogin"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="로그인"
+            android:text="시작"
             android:textSize="25sp"
             android:backgroundTint="#4CAF50"
             android:textColor="#FFFFFF"
             android:layout_marginEnd="8dp"
             android:elevation="4dp" />
-
 
     </LinearLayout>
 </ScrollView>
