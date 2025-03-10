@@ -148,6 +148,9 @@ class RegistrationActivity : AppCompatActivity() {
             
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 selectedCity = null
+                selectedFireStation = null
+                selectedFireCenter = null
+                selectedFireRegion = null
             }
         }
     }
@@ -216,6 +219,8 @@ class RegistrationActivity : AppCompatActivity() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 selectedFireStation = null
+                selectedFireCenter = null
+                selectedFireRegion = null
             }
         }
     }
@@ -280,6 +285,7 @@ class RegistrationActivity : AppCompatActivity() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 selectedFireCenter = null
+                selectedFireRegion = null
             }
         }
     }
