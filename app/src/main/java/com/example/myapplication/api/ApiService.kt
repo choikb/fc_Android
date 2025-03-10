@@ -123,6 +123,9 @@ class ApiService {
             }
         }
 
+    /**
+     * 도시 목록 조회
+     */
     suspend fun selectCityList(): List<FireStation> {
         // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
         return withContext(Dispatchers.IO) {
@@ -183,6 +186,70 @@ class ApiService {
         }
 
     }
+
+    /**
+     * 안전센터 목록 조회
+     * @param stationName 소방서 이름
+      */
+    suspend fun selectFireCenterList(stationName: String): List<FireStation> {
+        // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
+        return withContext(Dispatchers.IO) {
+            try {
+                val jsonObject = JSONObject().apply {
+                    put("stationName", stationName)
+                }
+
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "selectFireCenterList", jsonObject)
+
+                if (!responseBody.isNullOrEmpty()) {
+                    val dataArray = JSONArray(responseBody)
+
+                    // FireStation 클래스의 메소드를 사용하여 한 번에 목록 가져오기
+                    val fireCenterList = FireStation.fromJsonArray(dataArray)
+
+                    Log.d(TAG, "안전센터 목록 가져오기 성공: ${fireCenterList.size} 개 항목")
+                    fireCenterList
+                } else {
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "🚨 안전센터 목록 가져오기 실패: ${e.message}", e)
+                emptyList()
+            }
+        }
+
+    }
+
+    suspend fun selectFireRegionList(centerName: String): List<FireStation> {
+        // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
+        return withContext(Dispatchers.IO) {
+            try {
+                val jsonObject = JSONObject().apply {
+                    put("centerName", centerName)
+                }
+
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "selectFireRegionList", jsonObject)
+
+                if (!responseBody.isNullOrEmpty()) {
+                    val dataArray = JSONArray(responseBody)
+
+                    // FireStation 클래스의 메소드를 사용하여 한 번에 목록 가져오기
+                    val fireRegionList = FireStation.fromJsonArray(dataArray)
+
+                    Log.d(TAG, "지역대 목록 가져오기 성공: ${fireRegionList.size} 개 항목")
+                    fireRegionList
+                } else {
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "🚨 지역대 목록 가져오기 실패: ${e.message}", e)
+                emptyList()
+            }
+        }
+
+    }
+
+
 
 
     }

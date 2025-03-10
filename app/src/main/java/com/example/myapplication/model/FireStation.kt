@@ -9,7 +9,7 @@ import org.json.JSONObject
 data class FireStation(
     val id: Int? = null,
     val city: String? = null,
-    val stationName: String = "",
+    val stationName: String? = null,
     val centerName: String? = null,
     val regionNm: String? = null
     // Add other fields as needed
