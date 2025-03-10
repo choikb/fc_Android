@@ -191,12 +191,13 @@ class ApiService {
      * 안전센터 목록 조회
      * @param stationName 소방서 이름
       */
-    suspend fun selectFireCenterList(stationName: String): List<FireStation> {
+    suspend fun selectFireCenterList(stationName: String, cityName: String): List<FireStation> {
         // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
         return withContext(Dispatchers.IO) {
             try {
                 val jsonObject = JSONObject().apply {
                     put("stationName", stationName)
+                    put("city", cityName)
                 }
 
                 val responseBody = CmmnUtil.requestBody(BASE_URL + "selectFireCenterList", jsonObject)
@@ -220,12 +221,14 @@ class ApiService {
 
     }
 
-    suspend fun selectFireRegionList(centerName: String): List<FireStation> {
+    suspend fun selectFireRegionList(centerName: String, cityName: String, stationName: String): List<FireStation> {
         // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
         return withContext(Dispatchers.IO) {
             try {
                 val jsonObject = JSONObject().apply {
                     put("centerName", centerName)
+                    put("stationName", stationName)
+                    put("city", cityName)
                 }
 
                 val responseBody = CmmnUtil.requestBody(BASE_URL + "selectFireRegionList", jsonObject)

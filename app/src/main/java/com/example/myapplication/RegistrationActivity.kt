@@ -24,7 +24,7 @@ class RegistrationActivity : AppCompatActivity() {
     private lateinit var spinnerFireRegion: Spinner
 
     private var selectedCity: String? = null
-    private var selectedFireSrtation: String? = null
+    private var selectedFireStation: String? = null
     private var selectedFireCenter: String? = null
     private var selectedFireRegion: String? = null
 
@@ -201,12 +201,12 @@ class RegistrationActivity : AppCompatActivity() {
         // 스피너 선택 이벤트 처리
         spinnerFireStation.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                selectedFireSrtation = fireStationNames[position]
-                Log.d("RegistrationActivity", "선택된 소방서: $selectedFireSrtation")
+                selectedFireStation = fireStationNames[position]
+                Log.d("RegistrationActivity", "선택된 소방서: $selectedFireStation")
 
                 // "선택" 옵션이 아닐 때만 안전센터 목록 가져오기
                 if (position > 0) {
-                    loadFireCenterList(selectedFireSrtation!!)
+                    loadFireCenterList(selectedFireStation!!)
                 } else {
                     // 안전센터 스피너 초기화
                     setupEmptySpinner("fireCenter");
@@ -215,7 +215,7 @@ class RegistrationActivity : AppCompatActivity() {
             }
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
-                selectedFireSrtation = null
+                selectedFireStation = null
             }
         }
     }
@@ -226,7 +226,7 @@ class RegistrationActivity : AppCompatActivity() {
     private fun loadFireCenterList(stationName: String) {
         lifecycleScope.launch {
             try {
-                val fireCenterList = ApiService.selectFireCenterList(stationName)
+                val fireCenterList = ApiService.selectFireCenterList(stationName, selectedCity!!);
                 Log.d("RegistrationActivity", "안전센터 목록 가져오기 성공: ${fireCenterList.size} 개")
 
                 // UI 업데이트는 메인 스레드에서 수행해야 함
@@ -290,7 +290,7 @@ class RegistrationActivity : AppCompatActivity() {
     private fun loadFireRegionList(centerName: String) {
         lifecycleScope.launch {
             try {
-                val fireRegionList = ApiService.selectFireRegionList(centerName);
+                val fireRegionList = ApiService.selectFireRegionList(centerName, selectedCity!!, selectedFireStation!!);
                 Log.d("RegistrationActivity", "지역대 목록 가져오기 성공: ${fireRegionList.size} 개")
 
                 // UI 업데이트는 메인 스레드에서 수행해야 함
