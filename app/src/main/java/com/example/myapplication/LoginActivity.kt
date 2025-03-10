@@ -25,6 +25,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.preference.PreferenceManager
+import com.example.myapplication.api.ApiService
+import com.example.myapplication.model.FireStation
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -120,6 +122,7 @@ class LoginActivity : AppCompatActivity() {
         editor.apply()
 
         Thread {
+
             // DB에서 Android ID 확인
             if (!isAndroidIdRegistered(androidId)) {
                 // Android ID가 없으면 등록 화면 표시
