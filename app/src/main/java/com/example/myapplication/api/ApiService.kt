@@ -75,54 +75,42 @@ class ApiService {
          * Register a new user in the system
          * @param deviceId The unique device identifier
          * @param userName The name of the user
+         * @param city Selected city
+         * @param fireStation Selected fire station
+         * @param fireCenter Selected fire center
+         * @param fireRegion Selected fire region
          * @return Boolean indicating if the registration was successful
          */
-        fun registerUser(deviceId: String, userName: String): Boolean {
-            val jsonObject = JSONObject().apply {
-                put("action", "addUser")
-                put("userId", deviceId)  // 사용자 ID를 디바이스 ID와 동일하게 설정
-                put("deviceId", deviceId)
-                put("organization", "충남소방") // 조직 정보 (임시 값)
-                put("rank", "Admin") // 기본 등급
-                put("name", userName)
-                put("role", "화재조사") // 기본 역할
-                put("email", "") // 이메일 (추후 입력)
-                put("phoneNumber", "") // 전화번호 (추후 입력)
-            }
+        suspend fun registerUser(deviceId: String, userName: String, fireRegionId: Int? = null): Boolean {
 
-            val requestBody = jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
-            val request = Request.Builder()
-                .url(BASE_URL)
-                .post(requestBody)
-                .header("Content-Type", "application/json")
-                .header("User-Agent", "okhttp")
-                .build()
+            return withContext(Dispatchers.IO) {
+                try {
+                    val jsonObject = JSONObject().apply {
+                        put("userId", deviceId)  // 사용자 ID를 디바이스 ID와 동일하게 설정
+                        put("deviceId", deviceId)
+                        put("organization", "충남소방") // 조직 정보 (임시 값)
+                        put("rank", "Admin") // 기본 등급
+                        put("name", userName)
+                        put("role", "화재조사") // 기본 역할
+                        put("email", "") // 이메일 (추후 입력)
+                        put("phoneNumber", "") // 전화번호 (추후 입력)
+                        put("firestationId", fireRegionId ?: JSONObject.NULL)
 
-            return try {
-                val response = client.newCall(request).execute()
-                val responseBody = response.body?.string()
+                    }
 
-                Log.d(TAG, "Status Code: ${response.code}")
-                Log.d(TAG, "Response Body: $responseBody")
+                    val resultCnt = CmmnUtil.requestBody(BASE_URL + "user/registerUser", jsonObject)
 
-                if (!responseBody.isNullOrEmpty()) {
-                    val jsonResponse = JSONObject(responseBody)
-                    val bodyJson = JSONObject(jsonResponse.optString("body", "{}"))
-
-                    val success = bodyJson.optBoolean("success", false)
-
-                    // ✅ `affectedRows` 값 확인 후 성공 여부 반환
-                    val affectedRows = bodyJson.optJSONObject("data")?.optInt("affectedRows", 0) ?: 0
-                    Log.d(TAG, "affectedRows: $affectedRows")
-
-                    success && affectedRows > 0
-                } else {
+                    if (resultCnt!!.toInt() > 0) {
+                        true
+                    } else {
+                        false
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "🚨 API 요청 실패: ${e.message}", e)
                     false
                 }
-            } catch (e: IOException) {
-                Log.e(TAG, "🚨 API 요청 실패: ${e.message}", e)
-                false
             }
+
         }
 
     /**

@@ -3,6 +3,11 @@ package com.example.myapplication
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import androidx.appcompat.app.AlertDialog
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import android.provider.Settings
 import android.util.Log
 import android.view.View
@@ -27,6 +32,7 @@ class RegistrationActivity : AppCompatActivity() {
     private var selectedFireStation: String? = null
     private var selectedFireCenter: String? = null
     private var selectedFireRegion: String? = null
+    private var selectedFireRegionId: Int? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -70,25 +76,79 @@ class RegistrationActivity : AppCompatActivity() {
 
 
         buttonRegister.setOnClickListener {
+
+            
+            // 도시 선택 확인
+            if (selectedCity == null || selectedCity == "선택") {
+                Toast.makeText(this, "도시를 선택하세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            // 소방서 선택 확인
+            if (selectedFireStation == null || selectedFireStation == "선택") {
+                Toast.makeText(this, "소방서를 선택하세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            // 안전센터 선택 확인
+            if (selectedFireCenter == null || selectedFireCenter == "선택") {
+                Toast.makeText(this, "안전센터를 선택하세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            
+            // 지역대 선택 확인
+            if (selectedFireRegion == null || selectedFireRegion == "선택") {
+                Toast.makeText(this, "지역대를 선택하세요.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // 사용자명 입력 확인
             val userName = editTextUserName.text.toString().trim()
             if (userName.isEmpty()) {
                 Toast.makeText(this, "사용자명을 입력하세요.", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-
-            // ✅ 사용자 등록 요청 (동기식 처리)
-            Thread {
-                val success = registerUser(deviceId, userName)
-                runOnUiThread {
-                    if (success) {
-                        Toast.makeText(this, "사용자 등록 성공!", Toast.LENGTH_SHORT).show()
-                        startActivity(Intent(this, LoginActivity::class.java))
-                        finish()
-                    } else {
-                        Toast.makeText(this, "사용자 등록 실패!", Toast.LENGTH_SHORT).show()
+            
+            // 확인 대화상자 표시
+            AlertDialog.Builder(this)
+                .setTitle("사용자 등록")
+                .setMessage("사용자 등록 하시겠습니까?")
+                .setPositiveButton("네") { dialog, _ ->
+                    dialog.dismiss()
+                    
+                    // 모든 검증이 통과되면 사용자 등록 진행
+                    // ✅ 사용자 등록 요청 (coroutine을 사용한 비동기 처리)
+                    lifecycleScope.launch {
+                try {
+                    // 선택된 위치 정보를 포함하여 사용자 등록
+                    val success = registerUser(
+                        deviceId,
+                        userName,
+                        selectedFireRegionId
+                    )
+                    
+                    // UI 업데이트는 메인 스레드에서 수행해야 함
+                    withContext(Dispatchers.Main) {
+                        if (success) {
+                            Toast.makeText(this@RegistrationActivity, "사용자 등록 성공!", Toast.LENGTH_SHORT).show()
+                            startActivity(Intent(this@RegistrationActivity, LoginActivity::class.java))
+                            finish()
+                        } else {
+                            Toast.makeText(this@RegistrationActivity, "사용자 등록 실패!", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("RegistrationActivity", "사용자 등록 오류", e)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(this@RegistrationActivity, "사용자 등록 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
                     }
                 }
-            }.start()
+            }
+                }
+                .setNegativeButton("취소") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
         }
     }
 
@@ -151,6 +211,7 @@ class RegistrationActivity : AppCompatActivity() {
                 selectedFireStation = null
                 selectedFireCenter = null
                 selectedFireRegion = null
+                selectedFireRegionId = null
             }
         }
     }
@@ -221,6 +282,7 @@ class RegistrationActivity : AppCompatActivity() {
                 selectedFireStation = null
                 selectedFireCenter = null
                 selectedFireRegion = null
+                selectedFireRegionId = null
             }
         }
     }
@@ -286,6 +348,7 @@ class RegistrationActivity : AppCompatActivity() {
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 selectedFireCenter = null
                 selectedFireRegion = null
+                selectedFireRegionId = null
             }
         }
     }
@@ -341,6 +404,8 @@ class RegistrationActivity : AppCompatActivity() {
                     
                     // 찾은 객체에서 ID 값 가져오기
                     val regionId = selectedRegion?.id
+
+                    selectedFireRegionId = regionId;
                     
                     // ID 값 로그로 출력
                     Log.d("RegistrationActivity", "선택된 지역대 ID: $regionId")
@@ -354,6 +419,7 @@ class RegistrationActivity : AppCompatActivity() {
 
             override fun onNothingSelected(parent: AdapterView<*>?) {
                 selectedFireRegion = null
+                selectedFireRegionId = null
             }
         }
     }
@@ -375,7 +441,11 @@ class RegistrationActivity : AppCompatActivity() {
     }
 
     // 사용자 등록 요청 (동기식 API 요청)
-    private fun registerUser(deviceId: String, userName: String): Boolean {
-        return ApiService.registerUser(deviceId, userName)
+    private suspend fun registerUser(
+        deviceId: String, 
+        userName: String,
+        fireRegionId: Int? = null
+    ): Boolean {
+        return ApiService.registerUser(deviceId, userName, fireRegionId)
     }
 }

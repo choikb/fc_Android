@@ -23,6 +23,8 @@ class CmmnUtil {
 
         fun requestBody(url: String, jsonObject: JSONObject): String? {
 
+            Log.d(TAG, "Request JSON: ${jsonObject.toString()}")
+
             val requestBody = jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
             val request = Request.Builder()
                 .url(url)
