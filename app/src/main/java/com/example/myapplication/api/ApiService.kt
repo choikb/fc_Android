@@ -2,6 +2,7 @@ package com.example.myapplication.api
 
 import android.util.Log
 import com.example.myapplication.model.FireStation
+import com.example.myapplication.model.User
 import com.example.myapplication.util.CmmnUtil
 import com.example.myapplication.util.ConfigUtil
 import kotlinx.coroutines.Dispatchers
@@ -211,6 +212,9 @@ class ApiService {
 
     }
 
+    /**
+     * 지역대 조회
+      */
     suspend fun selectFireRegionList(centerName: String, cityName: String, stationName: String): List<FireStation> {
         // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
         return withContext(Dispatchers.IO) {
@@ -237,6 +241,34 @@ class ApiService {
             } catch (e: Exception) {
                 Log.e(TAG, "🚨 지역대 목록 가져오기 실패: ${e.message}", e)
                 emptyList()
+            }
+        }
+
+    }
+
+        /**
+         * 사용자 상세 조회
+         */
+    suspend fun selectUserDtl(androidId: String): User? {
+        // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
+        return withContext(Dispatchers.IO) {
+            try {
+                val jsonObject = JSONObject().apply {
+                    put("userId", androidId)
+                }
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "user/selectUserDtl", jsonObject)
+                if (!responseBody.isNullOrEmpty()) {
+                    val dataObject = JSONObject(responseBody)
+                    val user = User.fromJson(dataObject)
+
+                    Log.d(TAG, "사용자 가져오기 성공: ${user.name}")
+                    user
+                } else {
+                    null
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "🚨 사용자 가져오기 실패: ${e.message}", e)
+                null
             }
         }
 

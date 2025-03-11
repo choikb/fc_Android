@@ -118,31 +118,31 @@ class RegistrationActivity : AppCompatActivity() {
                     
                     // 모든 검증이 통과되면 사용자 등록 진행
                     // ✅ 사용자 등록 요청 (coroutine을 사용한 비동기 처리)
-                    lifecycleScope.launch {
-                try {
-                    // 선택된 위치 정보를 포함하여 사용자 등록
-                    val success = registerUser(
-                        deviceId,
-                        userName,
-                        selectedFireRegionId
-                    )
-                    
-                    // UI 업데이트는 메인 스레드에서 수행해야 함
-                    withContext(Dispatchers.Main) {
-                        if (success) {
-                            Toast.makeText(this@RegistrationActivity, "사용자 등록 성공!", Toast.LENGTH_SHORT).show()
-                            startActivity(Intent(this@RegistrationActivity, LoginActivity::class.java))
-                            finish()
-                        } else {
-                            Toast.makeText(this@RegistrationActivity, "사용자 등록 실패!", Toast.LENGTH_SHORT).show()
+                lifecycleScope.launch {
+                    try {
+                        // 선택된 위치 정보를 포함하여 사용자 등록
+                        val success = registerUser(
+                            deviceId,
+                            userName,
+                            selectedFireRegionId
+                        )
+
+                        // UI 업데이트는 메인 스레드에서 수행해야 함
+                        withContext(Dispatchers.Main) {
+                            if (success) {
+                                Toast.makeText(this@RegistrationActivity, "사용자 등록 성공!", Toast.LENGTH_SHORT).show()
+                                startActivity(Intent(this@RegistrationActivity, LoginActivity::class.java))
+                                finish()
+                            } else {
+                                Toast.makeText(this@RegistrationActivity, "사용자 등록 실패!", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    } catch (e: Exception) {
+                        Log.e("RegistrationActivity", "사용자 등록 오류", e)
+                        withContext(Dispatchers.Main) {
+                            Toast.makeText(this@RegistrationActivity, "사용자 등록 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
                         }
                     }
-                } catch (e: Exception) {
-                    Log.e("RegistrationActivity", "사용자 등록 오류", e)
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(this@RegistrationActivity, "사용자 등록 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
-                    }
-                }
             }
                 }
                 .setNegativeButton("취소") { dialog, _ ->

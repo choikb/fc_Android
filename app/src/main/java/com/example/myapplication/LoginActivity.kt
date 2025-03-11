@@ -24,9 +24,12 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
 import com.example.myapplication.api.ApiService
 import com.example.myapplication.model.FireStation
+import com.example.myapplication.model.User
+import kotlinx.coroutines.launch
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
@@ -57,9 +60,10 @@ class LoginActivity : AppCompatActivity() {
     }
 
 
-    private lateinit var spinnerCity: Spinner
-    private lateinit var spinnerFireStation: Spinner
-    private lateinit var spinnerCenter: Spinner
+    private lateinit var textCity: TextView
+    private lateinit var textFireStation: TextView
+    private lateinit var textCenter: TextView
+    private lateinit var textRegion: TextView
     private lateinit var spinnerExistingCase: Spinner
 
     private lateinit var editTextCaseName: EditText
@@ -121,8 +125,8 @@ class LoginActivity : AppCompatActivity() {
         editor.putString("ANDROID_ID", androidId)  // androidId를 "ANDROID_ID" 키로 저장
         editor.apply()
 
-        Thread {
 
+        lifecycleScope.launch {
             // DB에서 Android ID 확인
             if (!isAndroidIdRegistered(androidId)) {
                 // Android ID가 없으면 등록 화면 표시
@@ -130,9 +134,20 @@ class LoginActivity : AppCompatActivity() {
                 Log.d("API_RESULT", "사용자가 등록되지 않음")
             } else {
                 Log.d("API_RESULT", "사용자가 등록됨")
-            }
-        }.start()
+                val userName = getValuePreferences("userName")
+                val cityName = getValuePreferences("cityName")
+                val fireStationName = getValuePreferences("fireStationName")
+                val centerName = getValuePreferences("centerName")
+                val regionName = getValuePreferences("regionName")
+                textUserName.text = userName
+                textCity.text = cityName
+                textFireStation.text = fireStationName
+                textCenter.text = centerName
+                textRegion.text = regionName
 
+            }
+
+        }
 
         // 사건명 가져오기 및 스피너 초기화
         IncidentManager.fetchRecentIncidents { success ->
@@ -177,17 +192,17 @@ class LoginActivity : AppCompatActivity() {
         }
 
         // 사용자명 전시
-        val userName = getUserNameFromPreferences()
-        textUserName.text = userName
+
 
 
         buttonLogin.setOnClickListener {
 
             saveSelections() // 선택 데이터 저장
 
-            val city = spinnerCity.selectedItem.toString()
-            val fireStation = spinnerFireStation.selectedItem.toString()
-            val center = spinnerCenter.selectedItem.toString()
+            val city = textCity.text.toString()
+            val fireStation = textFireStation.text.toString()
+            val center = textCenter.text.toString()
+            val region = textRegion.text.toString()
             val caseName: String
 
             // 신규 입력 / 기존 선택 여부 확인
@@ -446,10 +461,10 @@ private fun navigateToMainMenu(city: String, fireStation: String, center: String
     }
 
     // 사용자명 가져오기 (SharedPreferences 예제)
-    private fun getUserNameFromPreferences(): String {
+    private fun getValuePreferences(key: String): String {
         // SharedPreferences에서 사용자명 가져오기
         val prefs = getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
-        return prefs.getString("userName", "알 수 없음") ?: "알 수 없음"
+        return prefs.getString(key, "알 수 없음") ?: "알 수 없음"
     }
 
     private fun registerIncident(caseName: String): Long? {
@@ -512,71 +527,26 @@ private fun navigateToMainMenu(city: String, fireStation: String, center: String
         }
     }
 
-    private fun isAndroidIdRegistered(androidId: String): Boolean { //쓰레드 사용코드
-        val url =
-            "https://ev0tafewtt.apigw.ntruss.com/firecapture-api/v0001/users?blocking=true&result=true"
-        val jsonObject = JSONObject().apply {
-            put("action", "getUserInfo")
-            put("userId", androidId)
-        }
-
-        val requestBody =
-            jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
-        val request = Request.Builder()
-            .url(url)
-            .post(requestBody)
-            .header("Content-Type", "application/json")
-            .header("User-Agent", "okhttp")
-            .build()
-
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .protocols(listOf(Protocol.HTTP_1_1))
-            .build()
+    private suspend fun isAndroidIdRegistered(androidId: String): Boolean { //쓰레드 사용코드
 
         return try {
-            val response = client.newCall(request).execute()
+            var user = ApiService.selectUserDtl(androidId);
 
-            // ✅ 응답 상태 코드 출력 (디버깅용)
-            Log.d("API_RESPONSE", "Status Code: ${response.code}")
+            if(user !== null){
+                val prefs = getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
+                val editor = prefs.edit()
+                editor.putString("userName", user.name)
+                editor.putString("cityName", user.city)
+                editor.putString("fireStationName", user.stationName)
+                editor.putString("centerName", user.centerName)
+                editor.putString("regionName", user.regionNm)
 
-            val responseBody = response.body?.string()
-            Log.d("API_RESPONSE", "Response Body: $responseBody")
+                editor.apply()
 
-
-            if (!responseBody.isNullOrEmpty()) {
-                val jsonResponse = JSONObject(responseBody)
-                val bodyJson = JSONObject(jsonResponse.optString("body", "{}"))
-                val dataArray = bodyJson.optJSONArray("data")
-
-                if (dataArray != null && dataArray.length() > 0) {
-                    val userInfo = dataArray.getJSONObject(0)
-
-                    // ✅ Buffer 데이터를 문자열로 변환
-                    val nameBuffer = userInfo.optJSONObject("name")
-                    val userName = if (nameBuffer != null && nameBuffer.has("data")) {
-                        val byteArray = nameBuffer.getJSONArray("data")
-                        val byteList = ByteArray(byteArray.length())
-                        for (i in 0 until byteArray.length()) {
-                            byteList[i] = byteArray.getInt(i).toByte()
-                        }
-                        String(byteList, Charsets.UTF_8) // ByteArray를 UTF-8 문자열로 변환
-                    } else {
-                        "알 수 없음" // name이 없는 경우 기본값
-                    }
-
-                    // ✅ SharedPreferences에 사용자명 저장
-                    val prefs = getSharedPreferences("MyAppPrefs", MODE_PRIVATE)
-                    val editor = prefs.edit()
-                    editor.putString("userName", userName)
-                    editor.apply()
-
-                    return true // 등록된 사용자
-                }
+                return true
+            }else {
+                return false
             }
-            return false // 등록되지 않은 사용자
         } catch (e: Exception) {
             Log.e("API_ERROR", "🚨 API 요청 실패: ${e.message}", e)
             false
@@ -593,9 +563,10 @@ private fun navigateToMainMenu(city: String, fireStation: String, center: String
     }
 
     private fun initViews() {
-        spinnerCity = findViewById(R.id.spinnerCity)
-        spinnerFireStation = findViewById(R.id.spinnerFireStation)
-        spinnerCenter = findViewById(R.id.spinnerCenter)
+        textCity = findViewById(R.id.textCity)
+        textFireStation = findViewById(R.id.textFireStation)
+        textCenter = findViewById(R.id.textCenter)
+        textRegion = findViewById(R.id.textRegion)
 
         buttonLogin = findViewById(R.id.buttonLogin)
         spinnerExistingCase = findViewById(R.id.spinnerExistingCase)
@@ -607,22 +578,7 @@ private fun navigateToMainMenu(city: String, fireStation: String, center: String
     }
 
     private fun setupSpinners() {
-        // 예시 데이터 (나중에 DB 연결 가능)
-        spinnerCity.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            fetchCityData()
-        )
-        spinnerFireStation.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            fetchFireStationData()
-        )
-        spinnerCenter.adapter = ArrayAdapter(
-            this,
-            android.R.layout.simple_spinner_dropdown_item,
-            fetchCenterData()
-        )
+        // TextView로 변환되어 더 이상 필요하지 않음
     }
 
     // 예시 데이터 함수
@@ -632,23 +588,18 @@ private fun navigateToMainMenu(city: String, fireStation: String, center: String
 
     // 이전 선택 데이터 복원
     private fun restoreSelections() {
-        val selectedCity = prefs.getString("CITY", null)
-        val selectedFireStation = prefs.getString("FIRE_STATION", null)
-        val selectedCenter = prefs.getString("CENTER", null)
+        // TextView로 변환되어 더 이상 필요하지 않음
         val caseName = prefs.getString("CASE_NAME", "")
-
-        spinnerCity.setSelection(getSpinnerIndex(spinnerCity, selectedCity))
-        spinnerFireStation.setSelection(getSpinnerIndex(spinnerFireStation, selectedFireStation))
-        spinnerCenter.setSelection(getSpinnerIndex(spinnerCenter, selectedCenter))
         // editTextCaseName.setText(caseName)
     }
 
     // 선택 데이터 저장
     private fun saveSelections() {
         val editor = prefs.edit()
-        editor.putString("CITY", spinnerCity.selectedItem.toString())
-        editor.putString("FIRE_STATION", spinnerFireStation.selectedItem.toString())
-        editor.putString("CENTER", spinnerCenter.selectedItem.toString())
+        editor.putString("CITY", textCity.text.toString())
+        editor.putString("FIRE_STATION", textFireStation.text.toString())
+        editor.putString("CENTER", textCenter.text.toString())
+        editor.putString("REGION", textRegion.text.toString())
         //editor.putString("CASE_NAME", editTextCaseName.text.toString())
         editor.apply()
     }

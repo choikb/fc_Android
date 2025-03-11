@@ -36,14 +36,18 @@
                 android:textSize="18sp"
                 android:gravity="center_vertical" />
 
-            <Spinner
-                android:id="@+id/spinnerCity"
+            <TextView
+                android:id="@+id/textCity"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="3"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:textSize="18dp"
+                android:textStyle="bold"
+                android:textColor="#000000"
                 android:gravity="center_vertical" />
+
         </LinearLayout>
 
         <!-- 소방서 -->
@@ -61,13 +65,16 @@
                 android:textSize="18sp"
                 android:gravity="center_vertical" />
 
-            <Spinner
-                android:id="@+id/spinnerFireStation"
+            <TextView
+                android:id="@+id/textFireStation"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="3"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:textSize="18dp"
+                android:textStyle="bold"
+                android:textColor="#000000"
                 android:gravity="center_vertical" />
         </LinearLayout>
 
@@ -86,13 +93,16 @@
                 android:textSize="18sp"
                 android:gravity="center_vertical" />
 
-            <Spinner
-                android:id="@+id/spinnerCenter"
+            <TextView
+                android:id="@+id/textCenter"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="3"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:textSize="18dp"
+                android:textStyle="bold"
+                android:textColor="#000000"
                 android:gravity="center_vertical" />
         </LinearLayout>
 
@@ -111,13 +121,16 @@
                 android:textSize="18sp"
                 android:gravity="center_vertical" />
 
-            <Spinner
-                android:id="@+id/spinnerRegion"
+            <TextView
+                android:id="@+id/textRegion"
                 android:layout_width="0dp"
                 android:layout_height="40dp"
                 android:layout_weight="3"
                 android:ellipsize="end"
                 android:maxLines="1"
+                android:textSize="18dp"
+                android:textStyle="bold"
+                android:textColor="#000000"
                 android:gravity="center_vertical" />
         </LinearLayout>
 
