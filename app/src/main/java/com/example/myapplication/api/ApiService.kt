@@ -3,6 +3,7 @@ package com.example.myapplication.api
 import android.util.Log
 import com.example.myapplication.model.FireStation
 import com.example.myapplication.util.CmmnUtil
+import com.example.myapplication.util.ConfigUtil
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.*
@@ -18,8 +19,9 @@ import java.util.concurrent.TimeUnit
  */
 class ApiService {
     companion object {
-        private const val BASE_URL = "http://10.0.1.13:8080/admin/api/cmmn/"
-        private const val TAG = "ApiService"
+        // Get BASE_URL from ConfigUtil instead of hardcoding
+        private val BASE_URL = ConfigUtil.getRootUrl() + "/admin/api/"
+        private val TAG = "ApiService"
 
         // Create a singleton instance of OkHttpClient to be reused across requests
         private val client by lazy {
@@ -132,7 +134,7 @@ class ApiService {
             try {
                 val jsonObject = JSONObject()
 
-                val responseBody = CmmnUtil.requestBody(BASE_URL + "selectCityList", jsonObject)
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "cmmn/selectCityList", jsonObject)
 
                 if (!responseBody.isNullOrEmpty()) {
                     val dataArray = JSONArray(responseBody)
@@ -166,7 +168,7 @@ class ApiService {
                     put("city", cityName)
                 }
 
-                val responseBody = CmmnUtil.requestBody(BASE_URL + "selectFireStationList", jsonObject)
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "cmmn/selectFireStationList", jsonObject)
 
                 if (!responseBody.isNullOrEmpty()) {
                     val dataArray = JSONArray(responseBody)
@@ -200,7 +202,7 @@ class ApiService {
                     put("city", cityName)
                 }
 
-                val responseBody = CmmnUtil.requestBody(BASE_URL + "selectFireCenterList", jsonObject)
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "cmmn/selectFireCenterList", jsonObject)
 
                 if (!responseBody.isNullOrEmpty()) {
                     val dataArray = JSONArray(responseBody)
@@ -231,7 +233,7 @@ class ApiService {
                     put("city", cityName)
                 }
 
-                val responseBody = CmmnUtil.requestBody(BASE_URL + "selectFireRegionList", jsonObject)
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "cmmn/selectFireRegionList", jsonObject)
 
                 if (!responseBody.isNullOrEmpty()) {
                     val dataArray = JSONArray(responseBody)
