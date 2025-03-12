@@ -51,7 +51,7 @@ object IncidentManager {
         // Use coroutine instead of Thread to call suspend function
         GlobalScope.launch(Dispatchers.IO) {
             try {
-                val incidentList = ApiService.selectIncidentList(startDate, endDate)
+                val incidentList = ApiService.selectIncidentList(startDate = startDate, endDate = endDate)
 
                 if (incidentList.isNotEmpty()) {
                     recentIncidents.clear()

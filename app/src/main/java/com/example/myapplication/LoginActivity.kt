@@ -258,11 +258,11 @@ class LoginActivity : AppCompatActivity() {
                 }
 
                 // ✅ 기존 사건 조회 후 incident_id 가져오기
-                Thread {
+                lifecycleScope.launch {
                     val incidentId = getIncidentIdByName(caseName)
                     runOnUiThread {
                         if (incidentId != null) {
-                            Toast.makeText(this, "기존 사건 선택 완료!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@LoginActivity, "기존 사건 선택 완료!", Toast.LENGTH_SHORT).show()
 
                             // ✅ 사건 정보 전역 변수 저장
                             IncidentManager.clear()
@@ -272,10 +272,10 @@ class LoginActivity : AppCompatActivity() {
                             // ✅ MainMenuActivity로 이동
                             navigateToMainMenu(city, fireStation, center, caseName)
                         } else {
-                            Toast.makeText(this, "사건 조회 실패!", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(this@LoginActivity, "사건 조회 실패!", Toast.LENGTH_SHORT).show()
                         }
                     }
-                }.start()
+                }
             }
         }
 
@@ -347,60 +347,17 @@ class LoginActivity : AppCompatActivity() {
 
 
 
-    private fun getIncidentIdByName(caseName: String): Long? {
-        val url = "https://ev0tafewtt.apigw.ntruss.com/firecapture-api/v0001/incidents?blocking=true&result=true"
-
-        val jsonObject = JSONObject().apply {
-            put("action", "getIncidentByName")
-            put("incidentName", caseName)
-        }
-
-        val requestBody = jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
-        val request = Request.Builder()
-            .url(url)
-            .post(requestBody)
-            .header("Content-Type", "application/json")
-            .header("User-Agent", "okhttp")
-            .build()
-
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .protocols(listOf(Protocol.HTTP_1_1))
-            .build()
+    private suspend fun getIncidentIdByName(caseName: String): Long? {
 
         return try {
-            val response = client.newCall(request).execute()
-            val responseBody = response.body?.string()
+            var incidentList = ApiService.selectIncidentList(incidentName = caseName)
 
-            Log.d("API_RESPONSE", "Status Code: ${response.code}")
-            Log.d("API_RESPONSE", "Response Body: $responseBody")
-
-            if (!responseBody.isNullOrEmpty()) {
-                val jsonResponse = JSONObject(responseBody)
-                val bodyJson = JSONObject(jsonResponse.optString("body", "{}"))
-                val dataArray = bodyJson.optJSONArray("data")
-
-                if (dataArray != null && dataArray.length() > 0) {
-                    val incidentJson = dataArray.getJSONObject(0)
-
-                    // ✅ Buffer 데이터를 숫자로 변환
-                    val incidentIdBuffer = incidentJson.optJSONObject("incident_id")
-                    return if (incidentIdBuffer != null && incidentIdBuffer.has("data")) {
-                        val byteArray = incidentIdBuffer.getJSONArray("data")
-                        val byteList = ByteArray(byteArray.length())
-                        for (i in 0 until byteArray.length()) {
-                            byteList[i] = byteArray.getInt(i).toByte()
-                        }
-                        val incidentIdStr = String(byteList, Charsets.UTF_8).trim()
-                        incidentIdStr.toLongOrNull() ?: -1 // 변환 실패 시 -1 반환
-                    } else {
-                        incidentJson.optLong("incident_id", -1).takeIf { it > 0 }
-                    }
-                }
+            if(incidentList.isNotEmpty()){
+                incidentList.get(0).incidentId!!.toLong()
+            }else{
+                null
             }
-            null
+
         } catch (e: Exception) {
             Log.e("API_ERROR", "🚨 사건 조회 API 요청 실패: ${e.message}", e)
             null

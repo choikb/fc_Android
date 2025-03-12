@@ -301,13 +301,14 @@ class ApiService {
         /**
          * 사건 목록 조회
           */
-    suspend fun selectIncidentList(startDate: String, endDate: String): List<Incident> {
+    suspend fun selectIncidentList(startDate: String? = null, endDate: String? = null, incidentName: String? = null): List<Incident> {
         // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
         return withContext(Dispatchers.IO) {
             try {
                 val jsonObject = JSONObject().apply {
                     put("startDate", startDate)
                     put("endDate", endDate)
+                    put("incidentName", incidentName)
                 }
 
                 val responseBody = CmmnUtil.requestBody(BASE_URL + "incident/selectIncidentList", jsonObject)
