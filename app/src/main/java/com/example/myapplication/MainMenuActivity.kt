@@ -4,6 +4,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
 
@@ -118,7 +119,17 @@ class MainMenuActivity : AppCompatActivity() {
         
         // 로그아웃 (앱 종료)
         buttonLogout.setOnClickListener {
-            finishAffinity()
+            AlertDialog.Builder(this)
+                .setTitle("로그아웃")
+                .setMessage("로그아웃 하시겠습니까?")
+                .setPositiveButton("네") { dialog, _ ->
+                    dialog.dismiss()
+                    finishAffinity()
+                }
+                .setNegativeButton("취소") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
         }
     }
 }
