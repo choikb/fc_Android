@@ -1,5 +1,6 @@
 package com.example.myapplication.api
 
+import android.provider.Settings
 import android.util.Log
 import com.example.myapplication.model.FireStation
 import com.example.myapplication.model.User
@@ -73,14 +74,7 @@ class ApiService {
         }
 
         /**
-         * Register a new user in the system
-         * @param deviceId The unique device identifier
-         * @param userName The name of the user
-         * @param city Selected city
-         * @param fireStation Selected fire station
-         * @param fireCenter Selected fire center
-         * @param fireRegion Selected fire region
-         * @return Boolean indicating if the registration was successful
+         * 사용자 등록
          */
         suspend fun registerUser(deviceId: String, userName: String, fireRegionId: Int? = null): Boolean {
 
@@ -269,6 +263,35 @@ class ApiService {
             } catch (e: Exception) {
                 Log.e(TAG, "🚨 사용자 가져오기 실패: ${e.message}", e)
                 null
+            }
+        }
+
+    }
+
+    /**
+     * 사건 등록
+     */
+    suspend fun registIncident(caseName: String, creatorId: String): Int {
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val jsonObject = JSONObject().apply {
+                    put("action", "addIncident")
+                    put("incidentName", caseName)
+                    put(
+                        "creatorId",
+                        creatorId
+                    ) // 현재 사용자 ID
+                    put("description", "신규 사건 등록") // 기본 설명 (필요 시 수정 가능)
+                    put("type", "화재") // 기본 사건 유형 (필요 시 수정 가능)
+                }
+
+                val resultCnt = CmmnUtil.requestBody(BASE_URL + "incident/registIncident", jsonObject)
+
+                resultCnt!!.toInt()
+            } catch (e: Exception) {
+                Log.e(TAG, "🚨 API 요청 실패: ${e.message}", e)
+                -1
             }
         }
 

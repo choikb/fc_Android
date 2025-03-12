@@ -21,6 +21,7 @@ import android.widget.RadioGroup
 import android.widget.Spinner
 import android.widget.TextView
 import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -29,6 +30,7 @@ import androidx.preference.PreferenceManager
 import com.example.myapplication.api.ApiService
 import com.example.myapplication.model.FireStation
 import com.example.myapplication.model.User
+import com.google.android.gms.common.api.Api
 import kotlinx.coroutines.launch
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
@@ -212,25 +214,38 @@ class LoginActivity : AppCompatActivity() {
                     Toast.makeText(this, "사건명을 입력하세요.", Toast.LENGTH_SHORT).show()
                     return@setOnClickListener
                 }
+
+                AlertDialog.Builder(this)
+                    .setTitle("사건 등록")
+                    .setMessage("사건 등록 하시겠습니까?")
+                    .setPositiveButton("네") { dialog, _ ->
+                        dialog.dismiss()
+
                 // ✅ 신규 사건 등록 API 호출 (동기 방식)
-                Thread {
-                    val incidentId = registerIncident(caseName)
-                    runOnUiThread {
-                        if (incidentId != null) {
-                            Toast.makeText(this, "사건 등록 성공!", Toast.LENGTH_SHORT).show()
+                    lifecycleScope.launch {
+                        val incidentId = registerIncident(caseName)
+                        runOnUiThread {
+                            if (incidentId != null) {
 
-                            // ✅ **신규 사건 정보 전역 변수 저장**
-                            IncidentManager.clear()
-                            IncidentManager.incidentId = incidentId
-                            IncidentManager.incidentName = caseName
+                                Toast.makeText(this@LoginActivity, "사건 등록 성공!", Toast.LENGTH_SHORT).show()
 
-                            // ✅ MainMenuActivity로 이동
-                            navigateToMainMenu(city, fireStation, center, caseName)
-                        } else {
-                            Toast.makeText(this, "사건 등록 실패!", Toast.LENGTH_SHORT).show()
+                                // ✅ **신규 사건 정보 전역 변수 저장**
+                                IncidentManager.clear()
+                                IncidentManager.incidentId = incidentId
+                                IncidentManager.incidentName = caseName
+
+                                // ✅ MainMenuActivity로 이동
+                                navigateToMainMenu(city, fireStation, center, caseName)
+                            } else {
+                                Toast.makeText(this@LoginActivity, "사건 등록 실패!", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
-                }.start()
+                }
+                .setNegativeButton("취소") { dialog, _ ->
+                    dialog.dismiss()
+                }
+                .show()
             } else {
                 // 기존 사건 선택 시
                 caseName = spinnerExistingCase.selectedItem.toString()
@@ -467,58 +482,17 @@ private fun navigateToMainMenu(city: String, fireStation: String, center: String
         return prefs.getString(key, "알 수 없음") ?: "알 수 없음"
     }
 
-    private fun registerIncident(caseName: String): Long? {
-        val url =
-            "https://ev0tafewtt.apigw.ntruss.com/firecapture-api/v0001/incidents?blocking=true&result=true"
-
-        val jsonObject = JSONObject().apply {
-            put("action", "addIncident")
-            put("incidentName", caseName)
-            put(
-                "creatorId",
-                Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID)
-            ) // 현재 사용자 ID
-            put("description", "신규 사건 등록") // 기본 설명 (필요 시 수정 가능)
-            put("type", "화재") // 기본 사건 유형 (필요 시 수정 가능)
-        }
-
-        val requestBody =
-            jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
-        val request = Request.Builder()
-            .url(url)
-            .post(requestBody)
-            .header("Content-Type", "application/json")
-            .header("User-Agent", "okhttp")
-            .build()
-
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .protocols(listOf(Protocol.HTTP_1_1))
-            .build()
+    private suspend fun registerIncident(caseName: String): Long? {
 
         return try {
-            val response = client.newCall(request).execute()
-            val responseBody = response.body?.string()
 
-            Log.d("API_RESPONSE", "Status Code: ${response.code}")
-            Log.d("API_RESPONSE", "Response Body: $responseBody")
+            var incidentId = ApiService.registIncident(caseName, Settings.Secure.getString(contentResolver, Settings.Secure.ANDROID_ID))
 
-            if (!responseBody.isNullOrEmpty()) {
-                val jsonResponse = JSONObject(responseBody)
-
-                // ✅ "body" 내부 JSON을 다시 파싱하여 incidentId 추출
-                val bodyJson = JSONObject(jsonResponse.optString("body", "{}"))
-                val incidentId =
-                    bodyJson.optJSONObject("data")?.optLong("insertId", -1)?.takeIf { it > 0 }
-                if (incidentId != null) {
-                    IncidentManager.incidentId = incidentId
-                    IncidentManager.incidentName = caseName  // 사건명도 저장
-                    return IncidentManager.incidentId
-                }
-                return bodyJson.optLong("incidentId", -1).takeIf { it > 0 }
-            } else {
+            if(incidentId > -1){
+                IncidentManager.incidentId = incidentId.toLong()
+                IncidentManager.incidentName = caseName  // 사건명도 저장
+                return IncidentManager.incidentId
+            }else{
                 null
             }
         } catch (e: Exception) {
