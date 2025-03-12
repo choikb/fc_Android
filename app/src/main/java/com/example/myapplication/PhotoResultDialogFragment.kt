@@ -129,7 +129,17 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
         
         // 지우기 버튼 처리
         buttonEraser.setOnClickListener {
-            toggleEraserMode()
+            // 지우기 모드로 즉시 전환
+            if (isEraserMode) {
+                // 이미 지우기 모드인 경우 비활성화
+                toggleEraserMode()
+            } else {
+                // 지우기 모드가 아닌 경우, 현재 모드 상태 초기화 후 지우기 모드로 전환
+                isDrawMode = false
+                drawView.setIconMode(false)
+                isEraserMode = false  // 토글을 위해 false로 설정
+                toggleEraserMode()
+            }
         }
         
         // 메모 필드 변경 시 현재 선택된 아이콘에 메모 연결
@@ -411,13 +421,20 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
         if (isEraserMode) {
             // 지우기 모드 활성화 시 그리기/아이콘 모드 비활성화
             isDrawMode = false
+            
+            // 아이콘 모드 비활성화 및 지우기 모드 활성화
             drawView.setIconMode(false)
             drawView.setEraserMode(true)
             
             // 스피너 비활성화 및 메모 필드 비활성화
-            spinnerIconSelect.setSelection(0)
+            if (spinnerIconSelect.selectedItemPosition != 0) {
+                spinnerIconSelect.setSelection(0, false)
+            }
             editTextMemo.setText("")
             editTextMemo.isEnabled = false
+            
+            // 현재 선택된 아이콘 초기화
+            selectedIcon = 0
         } else {
             // 지우기 모드 비활성화 시 그리기 모드로 전환
             isDrawMode = true
