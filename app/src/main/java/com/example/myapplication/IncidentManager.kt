@@ -2,6 +2,11 @@ package com.example.myapplication
 
 import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
+import com.example.myapplication.api.ApiService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -21,7 +26,7 @@ object IncidentManager {
 
 
     // API 호출: 최근 3개월 사건 가져오기
-    fun fetchRecentIncidents(onComplete: (Boolean) -> Unit) {
+    suspend fun fetchRecentIncidents(onComplete: (Boolean) -> Unit) {
         val url = "https://ev0tafewtt.apigw.ntruss.com/firecapture-api/v0001/incidents?blocking=true&result=true"
 
         val calendar = Calendar.getInstance()
@@ -41,59 +46,35 @@ object IncidentManager {
             set(Calendar.MINUTE, 0)
             set(Calendar.SECOND, 0)
         }.time)
-        val jsonObject = JSONObject().apply {
-            put("action", "getIncidentsByDate")
-            put("startDate", startDate) // 동적으로 설정된 3개월 전 날짜
-            put("endDate", endDate)    // 동적으로 설정된 현재 날짜
-        }
 
 
-        val requestBody = jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
-        val request = Request.Builder()
-            .url(url)
-            .post(requestBody)
-            .header("Content-Type", "application/json")
-            .build()
-
-        val client = OkHttpClient()
-        Thread {
+        // Use coroutine instead of Thread to call suspend function
+        GlobalScope.launch(Dispatchers.IO) {
             try {
-                val response = client.newCall(request).execute()
-                val responseBody = response.body?.string()
-                if (!responseBody.isNullOrEmpty()) {
-                    val jsonResponse = JSONObject(responseBody)
-                    val bodyJson = JSONObject(jsonResponse.optString("body", "{}"))
-                    val dataArray = bodyJson.optJSONArray("data")
-                    if (dataArray != null) {
-                        recentIncidents.clear()
-                        for (i in 0 until dataArray.length()) {
-                            val incident = dataArray.getJSONObject(i)
+                val incidentList = ApiService.selectIncidentList(startDate, endDate)
 
-                            // "incident_name" 필드 처리 (Buffer 형식 변환)
-                            val incidentName = if (incident.has("incident_name")) {
-                                val buffer = incident.getJSONObject("incident_name")
-                                val dataArray = buffer.getJSONArray("data")
-                                val byteArray = ByteArray(dataArray.length()) { index ->
-                                    dataArray.getInt(index).toByte()
-                                }
-                                String(byteArray) // ByteArray를 문자열로 변환
-                            } else {
-                                ""
-                            }
-                            // 변환된 문자열 추가
-                            recentIncidents.add(incidentName)
-                        }
+                if (incidentList.isNotEmpty()) {
+                    recentIncidents.clear()
+                    // 도시 이름만 추출 (중복 제거)
+                    val incidentNamesFromApi = incidentList.mapNotNull { it.incidentName }.distinct()
+
+                    recentIncidents.addAll(incidentNamesFromApi)
+
+                    // Switch to Main dispatcher to call the callback
+                    withContext(Dispatchers.Main) {
                         onComplete(true)
-                    } else {
-                        onComplete(false)
                     }
                 } else {
-                    onComplete(false)
+                    withContext(Dispatchers.Main) {
+                        onComplete(false)
+                    }
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                onComplete(false)
+                withContext(Dispatchers.Main) {
+                    onComplete(false)
+                }
             }
-        }.start()
+        }
     }
 }

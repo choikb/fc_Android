@@ -3,6 +3,7 @@ package com.example.myapplication.api
 import android.provider.Settings
 import android.util.Log
 import com.example.myapplication.model.FireStation
+import com.example.myapplication.model.Incident
 import com.example.myapplication.model.User
 import com.example.myapplication.util.CmmnUtil
 import com.example.myapplication.util.ConfigUtil
@@ -292,6 +293,38 @@ class ApiService {
             } catch (e: Exception) {
                 Log.e(TAG, "🚨 API 요청 실패: ${e.message}", e)
                 -1
+            }
+        }
+
+    }
+
+        /**
+         * 사건 목록 조회
+          */
+    suspend fun selectIncidentList(startDate: String, endDate: String): List<Incident> {
+        // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
+        return withContext(Dispatchers.IO) {
+            try {
+                val jsonObject = JSONObject().apply {
+                    put("startDate", startDate)
+                    put("endDate", endDate)
+                }
+
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "incident/selectIncidentList", jsonObject)
+
+                if (!responseBody.isNullOrEmpty()) {
+                    val dataArray = JSONArray(responseBody)
+
+                    val dataList = Incident.fromJsonArray(dataArray)
+
+                    Log.d(TAG, "사건 목록 가져오기 성공: ${dataList.size} 개 항목")
+                    dataList
+                } else {
+                    emptyList()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "🚨 사건 목록 가져오기 실패: ${e.message}", e)
+                emptyList()
             }
         }
 

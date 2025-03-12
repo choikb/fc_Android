@@ -152,12 +152,14 @@ class LoginActivity : AppCompatActivity() {
         }
 
         // 사건명 가져오기 및 스피너 초기화
-        IncidentManager.fetchRecentIncidents { success ->
-            runOnUiThread {
-                if (success) {
-                    setupExistingCaseSpinner(IncidentManager.recentIncidents)
-                } else {
-                    Toast.makeText(this, "사건 데이터를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+        lifecycleScope.launch {
+            IncidentManager.fetchRecentIncidents { success ->
+                runOnUiThread {
+                    if (success) {
+                        setupExistingCaseSpinner(IncidentManager.recentIncidents)
+                    } else {
+                        Toast.makeText(this@LoginActivity, "사건 데이터를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
         }
@@ -594,18 +596,7 @@ private fun navigateToMainMenu(city: String, fireStation: String, center: String
         //val jsonBody = """{"userId": 1234, "data": "someData"}"""
         val jsonBody = ""
 
-//        // ✅ 1️⃣ 비동기 방식 (Activation ID 받고 결과 조회)
-//        apiClient.requestProcess(jsonBody, isBlocking = false) { activationId ->
-//            if (activationId != null) {
-//                Log.d("API", "Received Activation ID: $activationId")
-//                // 일정 시간 후 결과 조회 (비동기)
-//                apiClient.fetchResultPeriodically(activationId) { result ->
-//                    Log.d("API", "비동기 처리 완료: $result")
-//                }
-//            } else {
-//                Log.e("API", "비동기 요청 실패")
-//            }
-//        }
+
 
         // ✅ 2️⃣ 동기 방식 (Blocking 처리)
         Thread {
@@ -614,42 +605,7 @@ private fun navigateToMainMenu(city: String, fireStation: String, center: String
         }.start()
 
 
-//
-//        GlobalScope.launch(Dispatchers.IO) {
-//            val url = "https://ev0tafewtt.apigw.ntruss.com/firecapture-api/v0001/user?blocking=true"
-//            val result = StringBuilder()
-//            try {
-//                val connection = (java.net.URL(url).openConnection() as java.net.HttpURLConnection).apply {
-//                    requestMethod = "POST"
-//                    setRequestProperty("Content-Type", "application/json")
-//                    doOutput = true
-//                }
-//
-//                // 요청 바디 작성 (필요한 경우)
-//                val requestBody = "{}" // 빈 JSON 객체
-//                connection.outputStream.use { outputStream ->
-//                    outputStream.write(requestBody.toByteArray())
-//                }
-//
-//                // 응답 받기
-//                connection.inputStream.use { inputStream ->
-//                    inputStream.bufferedReader().use { reader ->
-//                        reader.forEachLine { result.append(it) }
-//                    }
-//                }
-//
-//                // 결과값 콘솔에 출력
-//              //  withContext(Dispatchers.Main) {
-//                    println("Response: $result")
-//               // }
-//            } catch (e: Exception) {
-//                // 예외 처리
-//                e.printStackTrace()
-//             //   withContext(Dispatchers.Main) {
-//                    println("Error: ${e.message}")
-//              //  }
-//            }
-//        }
+
     }
 
 }
