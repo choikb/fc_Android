@@ -14,6 +14,8 @@ class MainMenuActivity : AppCompatActivity() {
     private lateinit var textViewCaseName: TextView
     private lateinit var buttonGoCapture: Button
     private lateinit var buttonGoSelectMedia: Button
+    private lateinit var buttonWriteReport: Button
+    private lateinit var buttonHome: Button
     private lateinit var buttonLogout: Button
 
     // 사용자 정보
@@ -37,6 +39,8 @@ class MainMenuActivity : AppCompatActivity() {
         textViewCaseName = findViewById(R.id.textViewCaseName)
         buttonGoCapture = findViewById(R.id.buttonGoCapture)
         buttonGoSelectMedia = findViewById(R.id.buttonGoSelectMedia)
+        buttonWriteReport = findViewById(R.id.buttonWriteReport)
+        buttonHome = findViewById(R.id.buttonHome)
         buttonLogout = findViewById(R.id.buttonLogout)
     }
 
@@ -83,7 +87,35 @@ class MainMenuActivity : AppCompatActivity() {
             }
             startActivity(intent)
         }
+        
+        // 보고서 작성 화면 이동
+        buttonWriteReport.setOnClickListener {
+            // 임시로 토스트 메세지 표시 (추후 ReportActivity 구현 예정)
+            android.widget.Toast.makeText(this, "보고서 작성 기능은 추후 추가될 예정입니다.", android.widget.Toast.LENGTH_SHORT).show()
+            
+            // 추후 아래 코드 사용 예정
+            /*
+            val intent = Intent(this, ReportActivity::class.java).apply {
+                putExtra("AFFILIATION", affiliation)
+                putExtra("NAME", name)
+                putExtra("CASE_NAME", caseName)
+            }
+            startActivity(intent)
+            */
+        }
 
+        // 홈 버튼 - 로그인 화면으로 돌아가기
+        buttonHome.setOnClickListener {
+            val intent = Intent(this, LoginActivity::class.java)
+            // 현재 세션을 유지하기 위해 사용자 정보 전달
+            intent.putExtra("AFFILIATION", affiliation)
+            intent.putExtra("NAME", name)
+            intent.putExtra("CASE_NAME", caseName)
+            // 이전 화면들을 스택에서 제거
+            intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP
+            startActivity(intent)
+        }
+        
         // 로그아웃 (앱 종료)
         buttonLogout.setOnClickListener {
             finishAffinity()

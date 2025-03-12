@@ -19,7 +19,7 @@
             android:layout_height="150dp"
             android:src="@drawable/logo1"
             android:contentDescription="앱 로고"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="5dp"
             android:layout_gravity="center_horizontal" />
 
         <!-- 사용자 정보 섹션 -->
@@ -29,7 +29,7 @@
             android:orientation="vertical"
             android:background="@drawable/border"
             android:padding="16dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="10dp"
             android:elevation="4dp">
 
             <TextView
@@ -107,48 +107,112 @@
                 android:textColor="#333333" />
         </LinearLayout>
 
-        <!-- 주요 버튼 섹션 -->
+        <!-- 주요 버튼 섹션 - 그리드 레이아웃으로 변경 -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="주요 기능"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#333333"
+            android:layout_marginBottom="12dp"
+            android:gravity="center" />
+            
+        <!-- 상단 버튼 행 -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:layout_marginBottom="24dp"
             android:gravity="center">
 
             <Button
                 android:id="@+id/buttonGoCapture"
                 android:layout_width="0dp"
-                android:layout_height="112dp"
+                android:layout_height="100dp"
                 android:layout_weight="1"
                 android:text="촬영 시작"
-                android:textSize="25sp"
+                android:textSize="20sp"
                 android:backgroundTint="#4CAF50"
                 android:textColor="#FFFFFF"
                 android:layout_marginEnd="8dp"
-                android:elevation="4dp" />
+                android:elevation="4dp"
+                android:drawableTop="@android:drawable/ic_menu_camera"
+                android:paddingTop="16dp" />
 
             <Button
                 android:id="@+id/buttonGoSelectMedia"
                 android:layout_width="0dp"
-                android:layout_height="112dp"
+                android:layout_height="100dp"
                 android:layout_weight="1"
                 android:text="미디어 선택"
-                android:textSize="25sp"
+                android:textSize="20sp"
                 android:backgroundTint="#03A9F4"
                 android:textColor="#FFFFFF"
-                android:elevation="4dp" />
+                android:elevation="4dp"
+                android:drawableTop="@android:drawable/ic_menu_gallery"
+                android:paddingTop="16dp" />
+        </LinearLayout>
+        
+        <!-- 중간 버튼 행 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/buttonWriteReport"
+                android:layout_width="0dp"
+                android:layout_height="100dp"
+                android:layout_weight="1"
+                android:text="보고서 작성"
+                android:textSize="20sp"
+                android:backgroundTint="#FF9800"
+                android:textColor="#FFFFFF"
+                android:elevation="4dp"
+                android:drawableTop="@android:drawable/ic_menu_edit"
+                android:paddingTop="16dp" />
         </LinearLayout>
 
-        <!-- 로그아웃 버튼 -->
-        <Button
-            android:id="@+id/buttonLogout"
+
+        <!-- 하단 버튼 섹션 (홈 버튼과 로그아웃 버튼) -->
+        <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="64dp"
-            android:text="로그아웃"
-            android:textSize="18sp"
-            android:backgroundTint="#F44336"
-            android:textColor="#FFFFFF"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
             android:layout_marginTop="24dp"
-            android:elevation="4dp" />
+            android:gravity="center">
+
+            <!-- 홈 버튼 -->
+            <Button
+                android:id="@+id/buttonHome"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="홈"
+                android:textSize="16sp"
+                android:backgroundTint="#2196F3"
+                android:textColor="#FFFFFF"
+                android:layout_marginEnd="8dp"
+                android:elevation="4dp"
+                android:drawableStart="@android:drawable/ic_menu_revert"
+                android:paddingStart="24dp"
+                android:gravity="center" />
+
+            <!-- 로그아웃 버튼 -->
+            <Button
+                android:id="@+id/buttonLogout"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_weight="1"
+                android:text="로그아웃"
+                android:textSize="16sp"
+                android:backgroundTint="#F44336"
+                android:textColor="#FFFFFF"
+                android:elevation="4dp"
+                android:drawableStart="@android:drawable/ic_lock_power_off"
+                android:paddingStart="24dp"
+                android:gravity="center" />
+        </LinearLayout>
     </LinearLayout>
 </ScrollView>
