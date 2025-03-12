@@ -169,37 +169,71 @@
         android:buttonTint="@android:color/holo_blue_dark"
         android:gravity="center" />
 
-    <!-- 색상 선택 및 미리보기 -->
+    <!-- 색상 선택 및 아이콘 선택 -->
     <LinearLayout
         android:id="@+id/colorPickerLayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:gravity="center"
+        android:gravity="center_vertical"
         android:layout_marginBottom="12dp"
-        android:visibility="gone">
+        android:visibility="gone"
+        android:padding="8dp">
 
+        <!-- 색상 선택 영역 -->
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="펜 색상:"
-            android:textSize="16sp"
+            android:textSize="14sp"
             android:textColor="@android:color/black"
             android:layout_marginEnd="8dp" />
 
+        <!-- 클릭하면 색상 선택 다이얼로그 표시 -->
         <View
             android:id="@+id/viewCurrentColor"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
             android:background="@android:color/holo_red_light"
-            android:layout_marginEnd="8dp" />
-
-        <Button
-            android:id="@+id/buttonPickColor"
+            android:layout_marginEnd="16dp"
+            android:clickable="true"
+            android:focusable="true" />
+        
+        <!-- 아이콘 선택 스피너 -->
+        <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="색상 선택"
-            android:textSize="14sp" />
+            android:text="아이콘:"
+            android:textSize="14sp"
+            android:textColor="@android:color/black"
+            android:layout_marginEnd="8dp" />
+            
+        <Spinner
+            android:id="@+id/spinnerIconSelect"
+            android:layout_width="70dp"
+            android:layout_height="32dp"
+            android:layout_marginEnd="8dp"
+            style="@android:style/Widget.Holo.Light.Spinner" />
+            
+        <!-- 아이콘 색상 미리보기 -->
+        <View
+            android:id="@+id/viewIconColor"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@android:color/holo_red_light"
+            android:layout_marginEnd="8dp"
+            android:clickable="true"
+            android:focusable="true" />
+            
+        <!-- 지우개 버튼 -->
+        <Button
+            android:id="@+id/buttonEraser"
+            android:layout_width="wrap_content"
+            android:layout_height="32dp"
+            android:text="지우개"
+            android:textSize="12sp"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp" />
     </LinearLayout>
 
     <!-- 메모 입력란 -->

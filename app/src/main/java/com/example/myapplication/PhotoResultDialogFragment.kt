@@ -15,6 +15,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import android.widget.AdapterView
 import androidx.fragment.app.DialogFragment
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -30,12 +31,20 @@ class PhotoResultDialogFragment : DialogFragment() {
     private lateinit var checkBoxEditMode: CheckBox
     private lateinit var buttonSave: Button
     private lateinit var buttonCancel: Button
-    private lateinit var buttonPickColor: Button
     private lateinit var viewCurrentColor: View
+    private lateinit var viewIconColor: View
+    private lateinit var spinnerIconSelect: Spinner
     private lateinit var colorPickerLayout: LinearLayout
     private lateinit var editTextMemo: EditText
+    private lateinit var buttonEraser: Button
 
     private var selectedColor: Int = Color.RED
+    private var selectedIconColor: Int = Color.RED
+    private var selectedIcon: Int = 0 // 0: 선택 없음, 1-5: 아이콘 번호
+    private var isDrawMode: Boolean = true // true: 그리기 모드, false: 아이콘 모드
+    private var isEraserMode: Boolean = false // 지우기 모드 상태
+    private val iconMemos = HashMap<Int, String>() // 아이콘별 메모 저장
+    private val iconColors = HashMap<Int, Int>() // 아이콘별 색상 저장
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,10 +78,18 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
         checkBoxEditMode = view.findViewById(R.id.checkBoxEditMode)
         buttonSave = view.findViewById(R.id.buttonSave)
         buttonCancel = view.findViewById(R.id.buttonCancel)
-        buttonPickColor = view.findViewById(R.id.buttonPickColor)
         viewCurrentColor = view.findViewById(R.id.viewCurrentColor)
+        viewIconColor = view.findViewById(R.id.viewIconColor)
+        spinnerIconSelect = view.findViewById(R.id.spinnerIconSelect)
         colorPickerLayout = view.findViewById(R.id.colorPickerLayout)
         editTextMemo = view.findViewById(R.id.editTextMemo)
+        buttonEraser = view.findViewById(R.id.buttonEraser)
+        
+        // 초기에는 메모 필드 비활성화
+        editTextMemo.isEnabled = false
+        
+        // 스피너 설정
+        setupIconSpinner()
 
         // 화면에 그대로 전시
         photoBitmap?.let {
@@ -88,10 +105,38 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
         checkBoxEditMode.setOnCheckedChangeListener { _, isChecked ->
             drawView.visibility = if (isChecked) View.VISIBLE else View.GONE
             colorPickerLayout.visibility = if (isChecked) View.VISIBLE else View.GONE
+            
+            if (isChecked) {
+                // 초기에는 그리기 모드로 설정
+                setDrawMode(true)
+            }
         }
 
-        buttonPickColor.setOnClickListener {
-            showColorPickerDialog()
+        // 그리기 색상 선택
+        viewCurrentColor.setOnClickListener {
+            setDrawMode(true);
+            showColorPickerDialog(true)
+        }
+        
+        // 아이콘 색상 선택
+        viewIconColor.setOnClickListener {
+            if (selectedIcon > 0) {
+                showColorPickerDialog(false)
+            } else {
+                Toast.makeText(requireContext(), "아이콘을 먼저 선택해주세요", Toast.LENGTH_SHORT).show()
+            }
+        }
+        
+        // 지우기 버튼 처리
+        buttonEraser.setOnClickListener {
+            toggleEraserMode()
+        }
+        
+        // 메모 필드 변경 시 현재 선택된 아이콘에 메모 연결
+        editTextMemo.setOnFocusChangeListener { _, hasFocus ->
+            if (!hasFocus && !isDrawMode) {
+                saveCurrentMemo()
+            }
         }
 
         buttonSave.setOnClickListener {
@@ -99,6 +144,9 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
             val memoText = editTextMemo.text.toString()
 
 
+            // 현재 메모 저장
+            saveCurrentMemo()
+            
             val finalBitmap = if (isEditing) {
                 drawView.getBitmapWithBackground(photoBitmap!!)  // 🎨 원본 포함된 비트맵 가져오기
             } else {
@@ -216,16 +264,184 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
     }
 
 
-    private fun showColorPickerDialog() {
-        val colors = intArrayOf(Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.BLACK)
+    private fun showColorPickerDialog(isDrawingColor: Boolean) {
+        val colors = intArrayOf(Color.RED, Color.BLUE, Color.GREEN, Color.YELLOW, Color.BLACK, Color.MAGENTA, Color.CYAN)
+        val colorNames = arrayOf("빨강", "파랑", "초록", "노랑", "검정", "보라", "하늘")
+        
         val builder = AlertDialog.Builder(requireContext())
-        builder.setTitle("펜 색상 선택")
-        builder.setItems(arrayOf("빨강", "파랑", "초록", "노랑", "검정")) { _, which ->
-            selectedColor = colors[which]
-            viewCurrentColor.setBackgroundColor(selectedColor)
-            drawView.setDrawingColor(selectedColor)
+        val title = if (isDrawingColor) "펜 색상 선택" else "아이콘 색상 선택"
+        builder.setTitle(title)
+        
+        builder.setItems(colorNames) { _, which ->
+            val selectedColorValue = colors[which]
+            
+            if (isDrawingColor) {
+                // 그리기 색상 업데이트
+                selectedColor = selectedColorValue
+                viewCurrentColor.setBackgroundColor(selectedColor)
+                drawView.setDrawingColor(selectedColor)
+            } else {
+                // 아이콘 색상 업데이트
+                selectedIconColor = selectedColorValue
+                viewIconColor.setBackgroundColor(selectedIconColor)
+                
+                // 현재 선택된 아이콘의 색상 저장
+                if (selectedIcon > 0) {
+                    iconColors[selectedIcon] = selectedIconColor
+                    drawView.setIconColor(selectedIcon, selectedIconColor)
+                }
+            }
         }
+        
         builder.show()
+    }
+    
+    private fun setupIconSpinner() {
+        // 스피너 아이템 설정
+        val items = arrayOf("선택", "1", "2", "3", "4", "5")
+        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, items)
+        spinnerIconSelect.adapter = adapter
+        
+        // 스피너 선택 이벤트 처리
+        spinnerIconSelect.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                // 현재 메모와 색상 저장
+                if (selectedIcon > 0) {
+                    saveCurrentMemo()
+                    saveCurrentIconColor()
+                }
+                
+                // 아이콘 번호 업데이트 (0은 선택없음, 1-5는 아이콘 번호)
+                selectedIcon = position
+                
+                if (position > 0) {
+                    // 아이콘 모드로 전환 (선택이 있을 때만)
+                    setDrawMode(false)
+                    // 저장된 메모와 색상 불러오기
+                    loadMemoForCurrentIcon()
+                    loadColorForCurrentIcon()
+                    // 메모 필드 활성화
+                    editTextMemo.isEnabled = true
+                } else {
+                    // 그리기 모드로 전환 (선택이 없을 때)
+                    setDrawMode(true)
+                    // 메모 필드 비활성화 및 비우기
+                    editTextMemo.setText("")
+                    editTextMemo.isEnabled = false
+                }
+            }
+            
+            override fun onNothingSelected(parent: AdapterView<*>?) {
+                // 아무것도 선택되지 않았을 때
+                setDrawMode(true)
+            }
+        }
+    }
+    
+    private fun setDrawMode(drawMode: Boolean) {
+        isDrawMode = drawMode
+        
+        // 지우기 모드 비활성화
+        if (isEraserMode) {
+            isEraserMode = false
+            drawView.setEraserMode(false)
+            updateEraserButtonState()
+        }
+        
+        // 아이콘/그리기 모드 전환
+        drawView.setIconMode(!drawMode)
+        
+        // UI 업데이트
+        if (drawMode) {
+            // 그리기 모드
+            // 스피너를 '선택'으로 설정
+            if (spinnerIconSelect.selectedItemPosition != 0) {
+                spinnerIconSelect.setSelection(0, false)
+            }
+        } else {
+            // 아이콘 모드
+            // 현재 선택된 아이콘 설정
+            if (selectedIcon > 0) {
+                drawView.setSelectedIcon(selectedIcon)
+            }
+        }
+    }
+    
+    private fun saveCurrentMemo() {
+        if (!isDrawMode && selectedIcon > 0) {
+            val memo = editTextMemo.text.toString()
+            iconMemos[selectedIcon] = memo
+            drawView.setIconMemo(selectedIcon, memo)
+        }
+    }
+    
+    private fun saveCurrentIconColor() {
+        if (selectedIcon > 0) {
+            iconColors[selectedIcon] = selectedIconColor
+            drawView.setIconColor(selectedIcon, selectedIconColor)
+        }
+    }
+    
+    private fun loadMemoForCurrentIcon() {
+        // 현재 아이콘에 저장된 메모 불러오기
+        if (selectedIcon > 0) {
+            val memo = iconMemos[selectedIcon] ?: drawView.getIconMemo(selectedIcon)
+            editTextMemo.setText(memo)
+        } else {
+            editTextMemo.setText("")
+        }
+    }
+    
+    private fun loadColorForCurrentIcon() {
+        // 현재 아이콘에 저장된 색상 불러오기
+        if (selectedIcon > 0) {
+            val iconColor = iconColors[selectedIcon] ?: drawView.getIconColor(selectedIcon)
+            selectedIconColor = iconColor
+            viewIconColor.setBackgroundColor(selectedIconColor)
+        }
+    }
+    
+    /**
+     * 지우기 모드 토글
+     */
+    private fun toggleEraserMode() {
+        // 지우기 모드와 다른 모드 사이의 전환
+        isEraserMode = !isEraserMode
+        
+        if (isEraserMode) {
+            // 지우기 모드 활성화 시 그리기/아이콘 모드 비활성화
+            isDrawMode = false
+            drawView.setIconMode(false)
+            drawView.setEraserMode(true)
+            
+            // 스피너 비활성화 및 메모 필드 비활성화
+            spinnerIconSelect.setSelection(0)
+            editTextMemo.setText("")
+            editTextMemo.isEnabled = false
+        } else {
+            // 지우기 모드 비활성화 시 그리기 모드로 전환
+            isDrawMode = true
+            drawView.setEraserMode(false)
+            setDrawMode(true)
+        }
+        
+        // 지우기 버튼 상태 업데이트
+        updateEraserButtonState()
+    }
+    
+    /**
+     * 지우기 버튼 상태 업데이트
+     */
+    private fun updateEraserButtonState() {
+        if (isEraserMode) {
+            // 지우기 모드가 활성화되어 있을 때
+            buttonEraser.setBackgroundColor(Color.LTGRAY)
+            buttonEraser.setTextColor(Color.BLACK)
+        } else {
+            // 지우기 모드가 비활성화되어 있을 때
+            buttonEraser.setBackgroundResource(android.R.drawable.btn_default)
+            buttonEraser.setTextColor(Color.BLACK)
+        }
     }
     /**
      * 📌 편집 내용을 이미지에 합성
