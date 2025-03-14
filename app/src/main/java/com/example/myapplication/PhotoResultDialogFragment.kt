@@ -4,6 +4,7 @@ package com.example.myapplication
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ContentValues
+import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.database.Cursor
 import android.graphics.*
@@ -17,6 +18,9 @@ import android.view.ViewGroup
 import android.widget.*
 import android.widget.AdapterView
 import androidx.fragment.app.DialogFragment
+import androidx.lifecycle.lifecycleScope
+import com.example.myapplication.api.ApiService
+import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
@@ -155,71 +159,70 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
 
         buttonSave.setOnClickListener {
             val isEditing = checkBoxEditMode.isChecked
-            val memoText = editTextMemo.text.toString()
-
-
             // 현재 메모 저장
             saveCurrentMemo()
-            
-            val finalBitmap = if (isEditing) {
-                drawView.getBitmapWithBackground(photoBitmap!!)  // 🎨 원본 포함된 비트맵 가져오기
-            } else {
-                photoBitmap
-            }
+            val memoText = iconMemos.toString()
 
-            //Boolean isori
-            // 원본 사진 저장
-            photoBitmap?.let {
-
-               // savePhoto(it, fileName, "Pictures/MyApp/Original")  // 경로는 이대로 두고
-               // val fileName = "ori_${System.currentTimeMillis()}.jpg"
-                var caseName = IncidentManager.incidentName
-                val fileName = caseName?.let { it1 -> generateFileName(false, it1) }
-                val path = "Pictures/MyApp/${caseName}" // 상대 경로
-
-                // 원본 사진 저장
-                val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
-                if (fileUri != null) {
-                    uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
-                    Toast.makeText(context, "원본 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
-                } else {
-                    Toast.makeText(context, "원본 파일 저장 실패", Toast.LENGTH_SHORT).show()
-                }
-            }
-            // 편집된 사진 저장 및 업로드
-            if (isEditing) {
-                finalBitmap?.let {
-                   // val fileName = "edit_${System.currentTimeMillis()}.jpg"
-                   // val path = "Pictures/MyApp/사건1"  // 편집된 사진 경로 설정
-                    var caseName = IncidentManager.incidentName
-                    val fileName = caseName?.let { it1 -> generateFileName(true, it1) }
-                    val path = "Pictures/MyApp/${caseName}" // 상대 경로
-
-                    // 편집된 사진 저장
-                    val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
-                    if (fileUri != null) {
-                        uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
-                        Toast.makeText(context, "편집된 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("사진 저장")
+                .setMessage("저장 하시겠습니까?")
+                .setPositiveButton("네") { dialog, _ ->
+                    dialog.dismiss()
+                    val finalBitmap = if (isEditing) {
+                        drawView.getBitmapWithBackground(photoBitmap!!)  // 🎨 원본 포함된 비트맵 가져오기
                     } else {
-                        Toast.makeText(context, "편집 파일 저장 실패", Toast.LENGTH_SHORT).show()
+                        photoBitmap
                     }
-                }
+
+                    //Boolean isori
+                    // 원본 사진 저장
+                    photoBitmap?.let {
+
+                        // savePhoto(it, fileName, "Pictures/MyApp/Original")  // 경로는 이대로 두고
+                        // val fileName = "ori_${System.currentTimeMillis()}.jpg"
+                        var caseName = IncidentManager.incidentName
+                        val fileName = caseName?.let { it1 -> generateFileName(false, it1) }
+                        val path = "Pictures/MyApp/${caseName}" // 상대 경로
+
+                        // 원본 사진 저장
+                        val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
+                        if (fileUri != null) {
+                            uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
+                            Toast.makeText(context, "원본 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "원본 파일 저장 실패", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                    // 편집된 사진 저장 및 업로드
+                    if (isEditing) {
+                        finalBitmap?.let {
+                            // val fileName = "edit_${System.currentTimeMillis()}.jpg"
+                            // val path = "Pictures/MyApp/사건1"  // 편집된 사진 경로 설정
+                            var caseName = IncidentManager.incidentName
+                            val fileName = caseName?.let { it1 -> generateFileName(true, it1) }
+                            val path = "Pictures/MyApp/${caseName}" // 상대 경로
+
+                            // 편집된 사진 저장
+                            val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
+                            if (fileUri != null) {
+                                uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
+                                Toast.makeText(context, "편집된 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
+                            } else {
+                                Toast.makeText(context, "편집 파일 저장 실패", Toast.LENGTH_SHORT).show()
+                            }
+                        }
+                    }
+
+                    dismiss() // 다이얼로그 닫기
+
+
             }
-//            if (isEditing) {
-//                // 편집된 사진 저장
-//                if (finalBitmap != null) {
-//                    savePhoto(
-//                        finalBitmap,
-//                        "edited_image_${System.currentTimeMillis()}.jpg",
-//                        "Pictures/MyApp/Edited"
-//                    )
-//
-//                } else {
-//                }
-//            }
+            .setNegativeButton("취소") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
+            
 
-
-            dismiss() // 다이얼로그 닫기
         }
         // 취소 버튼 클릭
         buttonCancel.setOnClickListener {
@@ -264,11 +267,21 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
         if (filePath != null) {
             val file = File(filePath)
             if (file.exists()) {
-                // 파일이 존재하면 클라우드에 업로드
-                val fileUploadClient = FileUploadClient(requireContext())
+                var incidentId = IncidentManager.incidentId
+                val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+                val creatorId = prefs.getString("ANDROID_ID", null)
+                val regionName = prefs.getString("CITY", null)
+                lifecycleScope.launch {
+                    ApiService.uploadFileToCloud(
+                        Uri.fromFile(file),
+                        fileName,
+                        memoText,
+                        incidentId,
+                        creatorId,
+                        regionName
+                    )
+                }
 
-                fileUploadClient.uploadFileToCloud(Uri.fromFile(file), fileName, memoText)
-                //fileUploadClient.uploadEditedFileToCloud(Uri.fromFile(file))
             } else {
                 Toast.makeText(context, "파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
             }

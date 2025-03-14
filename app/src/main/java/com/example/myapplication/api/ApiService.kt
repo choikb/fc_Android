@@ -1,7 +1,10 @@
 package com.example.myapplication.api
 
+import android.net.Uri
 import android.provider.Settings
 import android.util.Log
+import android.webkit.MimeTypeMap
+import com.example.myapplication.compressImageAndEncode
 import com.example.myapplication.model.FireStation
 import com.example.myapplication.model.Incident
 import com.example.myapplication.model.User
@@ -15,6 +18,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
 import org.json.JSONArray
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 /**
@@ -330,6 +334,73 @@ class ApiService {
         }
 
     }
+
+
+    suspend fun uploadFileToCloud(fileUri: Uri, fileName:String, memoText:String, incidentId: Long?, creatorId: String?, regionName: String?) {
+
+        return withContext(Dispatchers.IO) {
+            try {
+
+                val file = File(fileUri.path)
+                //val fileName = generateFileName() // 파일 이름 생성
+                val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
+                    ?: "application/octet-stream"
+
+                // Base64로 인코딩된 이미지 파일
+                // val fileData = file.readBytes()
+                // val encodedFileData = Base64.encodeToString(fileData, Base64.NO_WRAP)
+                val encodedFileData = compressImageAndEncode(file)
+                // JSON 본문 작성
+
+                val inputString = fileName.replace(" ", "")
+                val splitArray = inputString.split("_")
+                val caseName = splitArray[0]  // 사건명
+                val timestamp = splitArray[1]  // 타임스탬프
+                val fileType = splitArray[2].substringBeforeLast(".")   // 파일 타입
+                var type = ""  // var로 선언하여 변경 가능하도록 함
+                if (fileType == "ORI") {
+                    type = "original"
+                } else {
+                    type = "edited"
+                }
+
+                var memo = memoText
+                if (memoText.isEmpty()) {
+                    memo = "내용없음"
+                }
+
+                val jsonObject = JSONObject().apply {
+                    put("fileName", inputString)
+                    put("fileData", encodedFileData)
+                    put("mimeType", mimeType)
+                    put("mediaType", "photo")
+                    put("incidentId", incidentId)
+                    put("creatorId", creatorId)
+                    put("latitude", 37.5665)
+                    put("longitude", 126.978)
+                    put("altitude", 10.5)
+                    put("locationAddress", "서울특별시 종로구")
+                    put("resolution", "1920x1080")
+                    put("hashtags", "#서울 #사진")
+                    put("memo", memo)
+                    put("address", "서울시 종로구")
+                    put("regionName", regionName)
+                    put("capturedAt", "2023-04-01 12:00:00")
+                    put("version", type)
+                }
+
+
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "media/uploadPhotoData", jsonObject)
+
+
+            } catch (e: Exception) {
+                Log.e(TAG, "🚨 사건 목록 가져오기 실패: ${e.message}", e)
+            }
+        }
+
+    }
+
+
 
 
 
