@@ -227,10 +227,10 @@
             
         <!-- 지우개 버튼 -->
         <Button
-            android:id="@+id/buttonEraser"
+            android:id="@+id/buttonReset"
             android:layout_width="wrap_content"
             android:layout_height="32dp"
-            android:text="지우개"
+            android:text="초기화"
             android:textSize="12sp"
             android:paddingStart="8dp"
             android:paddingEnd="8dp" />

@@ -36,13 +36,12 @@ class PhotoResultDialogFragment : DialogFragment() {
     private lateinit var spinnerIconSelect: Spinner
     private lateinit var colorPickerLayout: LinearLayout
     private lateinit var editTextMemo: EditText
-    private lateinit var buttonEraser: Button
+    private lateinit var buttonReset: Button
 
     private var selectedColor: Int = Color.RED
     private var selectedIconColor: Int = Color.RED
     private var selectedIcon: Int = 0 // 0: 선택 없음, 1-5: 아이콘 번호
     private var isDrawMode: Boolean = true // true: 그리기 모드, false: 아이콘 모드
-    private var isEraserMode: Boolean = false // 지우기 모드 상태
     private val iconMemos = HashMap<Int, String>() // 아이콘별 메모 저장
     private val iconColors = HashMap<Int, Int>() // 아이콘별 색상 저장
 
@@ -83,7 +82,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
         spinnerIconSelect = view.findViewById(R.id.spinnerIconSelect)
         colorPickerLayout = view.findViewById(R.id.colorPickerLayout)
         editTextMemo = view.findViewById(R.id.editTextMemo)
-        buttonEraser = view.findViewById(R.id.buttonEraser)
+        buttonReset = view.findViewById(R.id.buttonReset)
         
         // 초기에는 메모 필드 비활성화
         editTextMemo.isEnabled = false
@@ -127,24 +126,29 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
             }
         }
         
-        // 지우기 버튼 처리
-        buttonEraser.setOnClickListener {
-            // 지우기 모드로 즉시 전환
-            if (isEraserMode) {
-                // 이미 지우기 모드인 경우 비활성화
-                toggleEraserMode()
-            } else {
-                // 지우기 모드가 아닌 경우, 현재 모드 상태 초기화 후 지우기 모드로 전환
-                isDrawMode = false
-                drawView.setIconMode(false)
-                isEraserMode = false  // 토글을 위해 false로 설정
-                toggleEraserMode()
+        // 초기화 버튼 처리
+        buttonReset.setOnClickListener {
+            // 모든 편집 내용 초기화
+            androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                .setTitle("편집 초기화")
+                .setMessage("초기화 하시겠습니까?")
+                .setPositiveButton("네") { dialog, _ ->
+                    dialog.dismiss()
+
+
+            resetEditState()
+
+                Toast.makeText(requireContext(), "편집 내용이 초기화되었습니다.", Toast.LENGTH_SHORT).show()
             }
+            .setNegativeButton("취소") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
         }
         
         // 메모 필드 변경 시 현재 선택된 아이콘에 메모 연결
         editTextMemo.setOnFocusChangeListener { _, hasFocus ->
-            if (!hasFocus && !isDrawMode) {
+            if (!hasFocus) {
                 saveCurrentMemo()
             }
         }
@@ -351,13 +355,6 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
     private fun setDrawMode(drawMode: Boolean) {
         isDrawMode = drawMode
         
-        // 지우기 모드 비활성화
-        if (isEraserMode) {
-            isEraserMode = false
-            drawView.setEraserMode(false)
-            updateEraserButtonState()
-        }
-        
         // 아이콘/그리기 모드 전환
         drawView.setIconMode(!drawMode)
         
@@ -378,7 +375,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
     }
     
     private fun saveCurrentMemo() {
-        if (!isDrawMode && selectedIcon > 0) {
+        if (selectedIcon > 0) {
             val memo = editTextMemo.text.toString()
             iconMemos[selectedIcon] = memo
             drawView.setIconMemo(selectedIcon, memo)
@@ -412,53 +409,37 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
     }
     
     /**
-     * 지우기 모드 토글
+     * 모든 편집 내용 초기화
      */
-    private fun toggleEraserMode() {
-        // 지우기 모드와 다른 모드 사이의 전환
-        isEraserMode = !isEraserMode
+    private fun resetEditState() {
+        // 그리기 모드로 설정
+        isDrawMode = true
         
-        if (isEraserMode) {
-            // 지우기 모드 활성화 시 그리기/아이콘 모드 비활성화
-            isDrawMode = false
-            
-            // 아이콘 모드 비활성화 및 지우기 모드 활성화
-            drawView.setIconMode(false)
-            drawView.setEraserMode(true)
-            
-            // 스피너 비활성화 및 메모 필드 비활성화
-            if (spinnerIconSelect.selectedItemPosition != 0) {
-                spinnerIconSelect.setSelection(0, false)
-            }
-            editTextMemo.setText("")
-            editTextMemo.isEnabled = false
-            
-            // 현재 선택된 아이콘 초기화
-            selectedIcon = 0
-        } else {
-            // 지우기 모드 비활성화 시 그리기 모드로 전환
-            isDrawMode = true
-            drawView.setEraserMode(false)
-            setDrawMode(true)
+        // DrawView 초기화
+        drawView.clear()
+        drawView.setIconMode(false)
+        
+        // 스피너 초기화
+        if (spinnerIconSelect.selectedItemPosition != 0) {
+            spinnerIconSelect.setSelection(0, false)
         }
         
-        // 지우기 버튼 상태 업데이트
-        updateEraserButtonState()
-    }
-    
-    /**
-     * 지우기 버튼 상태 업데이트
-     */
-    private fun updateEraserButtonState() {
-        if (isEraserMode) {
-            // 지우기 모드가 활성화되어 있을 때
-            buttonEraser.setBackgroundColor(Color.LTGRAY)
-            buttonEraser.setTextColor(Color.BLACK)
-        } else {
-            // 지우기 모드가 비활성화되어 있을 때
-            buttonEraser.setBackgroundResource(android.R.drawable.btn_default)
-            buttonEraser.setTextColor(Color.BLACK)
-        }
+        // 아이콘 선택 초기화
+        selectedIcon = 0
+        
+        // 메모 필드 초기화
+        editTextMemo.setText("")
+        editTextMemo.isEnabled = false
+        
+        // 아이콘 메모와 색상 저장소 초기화
+        iconMemos.clear()
+        iconColors.clear()
+        
+        // 기본 색상으로 초기화
+        selectedColor = Color.RED
+        selectedIconColor = Color.RED
+        viewCurrentColor.setBackgroundColor(selectedColor)
+        viewIconColor.setBackgroundColor(selectedIconColor)
     }
     /**
      * 📌 편집 내용을 이미지에 합성
