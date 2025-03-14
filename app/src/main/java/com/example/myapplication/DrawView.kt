@@ -239,6 +239,19 @@ class DrawView(context: Context, attrs: AttributeSet? = null) : View(context, at
         tempCanvas.scale(scaleX, scaleY)  // 좌표 비율 조정
         bitmap?.let { tempCanvas.drawBitmap(it, 0f, 0f, null) }
         tempCanvas.drawPath(path, paint)
+        
+        // 아이콘 그리기 추가
+        for ((number, position) in icons) {
+            // 해당 아이콘의 색상 가져오기
+            val iconColor = iconColors[number] ?: Color.RED
+            iconBackgroundPaint.color = iconColor
+            
+            // 원 배경 그리기
+            tempCanvas.drawCircle(position.x, position.y, 30f, iconBackgroundPaint)
+            // 숫자 그리기
+            tempCanvas.drawText(number.toString(), position.x, position.y + 15f, iconPaint)
+        }
+        
         tempCanvas.restore()
 
         return resultBitmap
