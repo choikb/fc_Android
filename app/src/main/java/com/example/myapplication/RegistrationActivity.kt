@@ -435,10 +435,6 @@ class RegistrationActivity : AppCompatActivity() {
         return Settings.Secure.getString(context.contentResolver, Settings.Secure.ANDROID_ID)
     }
 
-    // 서버에 디바이스 ID 존재 여부 확인 (동기식 API 요청)
-    private fun checkIfDeviceRegistered(deviceId: String): Boolean {
-        return ApiService.checkIfDeviceRegistered(deviceId)
-    }
 
     // 사용자 등록 요청 (동기식 API 요청)
     private suspend fun registerUser(

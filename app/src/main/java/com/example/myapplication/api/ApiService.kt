@@ -30,53 +30,6 @@ class ApiService {
         private val BASE_URL = ConfigUtil.getRootUrl() + "/admin/api/"
         private val TAG = "ApiService"
 
-        // Create a singleton instance of OkHttpClient to be reused across requests
-        private val client by lazy {
-            OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(30, TimeUnit.SECONDS)
-                .writeTimeout(30, TimeUnit.SECONDS)
-                .protocols(listOf(Protocol.HTTP_1_1))
-                .build()
-        }
-
-        /**
-         * Check if a device is already registered in the system
-         * @param deviceId The unique device identifier
-         * @return Boolean indicating if the device is registered
-         */
-        fun checkIfDeviceRegistered(deviceId: String): Boolean {
-            val jsonObject = JSONObject().apply {
-                put("action", "checkDevice")
-                put("device_id", deviceId)
-            }
-
-            val requestBody = jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
-            val request = Request.Builder()
-                .url(BASE_URL)
-                .post(requestBody)
-                .header("Content-Type", "application/json")
-                .header("User-Agent", "okhttp")
-                .build()
-
-            return try {
-                val response = client.newCall(request).execute()
-                val responseBody = response.body?.string()
-
-                Log.d(TAG, "Status Code: ${response.code}")
-                Log.d(TAG, "Response Body: $responseBody")
-
-                if (!responseBody.isNullOrEmpty()) {
-                    val jsonResponse = JSONObject(responseBody)
-                    jsonResponse.optBoolean("registered", false)
-                } else {
-                    false
-                }
-            } catch (e: IOException) {
-                Log.e(TAG, "🚨 API 요청 실패: ${e.message}", e)
-                false
-            }
-        }
 
         /**
          * 사용자 등록
@@ -253,7 +206,7 @@ class ApiService {
         return withContext(Dispatchers.IO) {
             try {
                 val jsonObject = JSONObject().apply {
-                    put("userId", androidId)
+                    put("deviceId", androidId)
                 }
                 val responseBody = CmmnUtil.requestBody(BASE_URL + "user/selectUserDtl", jsonObject)
                 if (!responseBody.isNullOrEmpty()) {
