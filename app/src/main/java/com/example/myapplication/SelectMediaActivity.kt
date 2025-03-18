@@ -404,16 +404,27 @@ class SelectMediaActivity : AppCompatActivity() {
             MediaStore.Images.Media.DISPLAY_NAME
         )
 
-        val selection = "${MediaStore.Images.Media.BUCKET_DISPLAY_NAME} = ?"
-        val selectionArgs = arrayOf(folderPath)
+        // Different handling for "Recent" folder vs. other folders
+        val selection: String?
+        val selectionArgs: Array<String>?
+        
+        if (selectedFolder?.name == "Recent") {
+            // For "Recent" folder, show all photos without folder filtering
+            selection = null
+            selectionArgs = null
+        } else {
+            // For other folders, filter by BUCKET_DISPLAY_NAME
+            selection = "${MediaStore.Images.Media.BUCKET_DISPLAY_NAME} = ?"
+            selectionArgs = arrayOf(selectedFolder?.name ?: "")
+        }
 
         val sortOrder = "${MediaStore.Images.Media.DATE_ADDED} DESC"
 
         val cursor = contentResolver.query(
             MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-            projection, null, null,
-            //selection,
-            //selectionArgs,
+            projection,
+            selection,
+            selectionArgs,
             sortOrder
         )
 
@@ -426,36 +437,25 @@ class SelectMediaActivity : AppCompatActivity() {
                 val id = it.getLong(idColumn)
                 val name = it.getString(nameColumn)
                 val folder = it.getString(folderColumn) ?: "Unknown"
-
+                
                 val contentUri = ContentUris.withAppendedId(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
                     id
                 )
-
-                mediaItems.add(MediaItem(name, contentUri.toString(), isFolder = false))
+                
+                // Apply filter if specified
+                if (filter != null) {
+                    val isUploaded = checkIfUploaded(contentUri.toString())
+                    if (filter == isUploaded) {
+                        mediaItems.add(MediaItem(name, contentUri.toString(), isFolder = false))
+                    }
+                } else {
+                    mediaItems.add(MediaItem(name, contentUri.toString(), isFolder = false))
+                }
             }
         }
 
         mediaRecyclerView.adapter?.notifyDataSetChanged()
-
-//        cursor?.use {
-//            val idColumn = it.getColumnIndexOrThrow(MediaStore.Images.Media._ID)
-//            val nameColumn = it.getColumnIndexOrThrow(MediaStore.Images.Media.DISPLAY_NAME)
-//
-//            while (it.moveToNext()) {
-//                val id = it.getLong(idColumn)
-//                val name = it.getString(nameColumn)
-//
-//                val contentUri = ContentUris.withAppendedId(
-//                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
-//                    id
-//                )
-//
-//                mediaItems.add(MediaItem(name, contentUri.toString(), false))
-//            }
-//        }
-//
-//        mediaRecyclerView.adapter?.notifyDataSetChanged()
     }
 
 
