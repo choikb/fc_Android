@@ -467,7 +467,7 @@ class SelectMediaActivity : AppCompatActivity() {
         memoEditText.visibility = View.GONE
         uploadButton.visibility = View.GONE
 
-        val basicFolders = listOf("Recent", "Camera", "Screenshots", "Favorites") // 기본 폴더 이름
+        val basicFolders = listOf("Recent", "Camera", "Screenshots", "Favorites","Pictures","Download") // 기본 폴더 이름
         val basicFolderMap = mutableMapOf<String, MediaItem>() // 기본 폴더 매핑
         val otherFolderMap = mutableMapOf<String, MediaItem>() // 기타 폴더 매핑
 

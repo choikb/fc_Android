@@ -32,7 +32,24 @@ class MediaAdapter(
         holder.textView.text = mediaItem.name
 
         if (mediaItem.isFolder) {
-            holder.imageView.setImageResource(R.drawable.ic_folder) // Replace with a built-in icon
+            // Set folder icon with different colors based on folder name
+            holder.imageView.setImageResource(R.drawable.ic_folder)
+            
+            // Apply different colors to folder icons based on folder name
+            when {
+                mediaItem.name == "Recent" || mediaItem.name == "Camera" || mediaItem.name == "Screenshots" || mediaItem.name == "Favorites" || mediaItem.name == "Pictures" || mediaItem.name == "Download" -> {
+                    // Blue tint for system folders
+                    holder.imageView.setColorFilter(context.getColor(android.R.color.holo_blue_light))
+                }
+                mediaItem.name.startsWith("20") -> {
+                    // Green tint for date folders (assuming they start with year like "2023")
+                    holder.imageView.setColorFilter(context.getColor(android.R.color.holo_green_light))
+                }
+                else -> {
+                    // Orange tint for other folders
+                    holder.imageView.setColorFilter(context.getColor(android.R.color.holo_orange_light))
+                }
+            }
 
             holder.textViewFolderDate.text = mediaItem.creationTime ?: "날짜 없음"
             holder.textViewFolderCount.text = "${mediaItem.photoCount}개"
@@ -47,6 +64,9 @@ class MediaAdapter(
             Glide.with(context).load(mediaItem.path).into(holder.imageView) // Glide로 이미지 로드
             holder.textViewFolderDate.visibility = View.GONE
             holder.textViewFolderCount.visibility = View.GONE
+            
+            // Clear any color filter for non-folder items
+            holder.imageView.clearColorFilter()
 
             // ✅ 이미지 부분에만 테두리 적용
             holder.imageView.foreground = if (selectedItems.contains(mediaItem)) {
