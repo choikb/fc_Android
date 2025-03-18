@@ -15,12 +15,15 @@ import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.fragment.app.Fragment
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.example.myapplication.api.ApiService
 import java.io.File
 import com.example.myapplication.media.MediaAdapter
 
 import com.example.myapplication.media.MediaItem // 필요한 패키지 경로 확인 후 수정
+import kotlinx.coroutines.launch
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -128,67 +131,22 @@ class SelectMediaActivity : AppCompatActivity() {
     }
 
     private fun getUploadedMediaNames(incidentId: String) {
-        val url =
-            "https://ev0tafewtt.apigw.ntruss.com/firecapture-api/v0001/media/media-r?blocking=true&result=true"
-        val jsonObject = JSONObject().apply {
-            put("action", "getUploadedMediaNames")
-            put("incidentId", incidentId)
-        }
-
-        val requestBody =
-            jsonObject.toString().toRequestBody("application/json".toMediaTypeOrNull())
-        val request = Request.Builder()
-            .url(url)
-            .post(requestBody)
-            .header("Content-Type", "application/json")
-            .header("User-Agent", "okhttp")
-            .build()
-
-        val client = OkHttpClient.Builder()
-            .connectTimeout(30, TimeUnit.SECONDS)
-            .readTimeout(30, TimeUnit.SECONDS)
-            .writeTimeout(30, TimeUnit.SECONDS)
-            .protocols(listOf(Protocol.HTTP_1_1))
-            .build()
 
         try {
-            val response = client.newCall(request).execute()
-            val responseBody = response.body?.string()
 
-            if (!responseBody.isNullOrEmpty()) {
-                val jsonResponse = JSONObject(responseBody)
-                val bodyJson = JSONObject(jsonResponse.optString("body", "{}"))
+            lifecycleScope.launch {
+                val dataArray = ApiService.getMediaList(incidentId);
 
-                val dataArray = bodyJson.opt("data") // 🔹 optJSONArray() 대신 opt() 사용
+                val fileNames = mutableListOf<String>()
 
-                if (dataArray is JSONArray) {
-                    val fileNames = mutableListOf<String>()
+                for (i in 0 until dataArray.size) {
+                    val element = dataArray.get(i) // 🔹 요소를 직접 가져오기
 
-                    for (i in 0 until dataArray.length()) {
-                        val element = dataArray.get(i) // 🔹 요소를 직접 가져오기
-
-                        if (element is JSONObject) {
-                            // ✅ JSON 객체인 경우 (fileName을 가진 JSON 구조)
-                            val fileName = element.optString("fileName", "Unknown")
-                            fileNames.add(fileName)
-                        } else if (element is String) {
-                            // ✅ 단순 문자열 배열인 경우
-                            fileNames.add(element)
-                        } else {
-                            Log.w(
-                                "UploadedFiles",
-                                "Unsupported data type at index $i: ${element?.javaClass}"
-                            )
-                        }
-                    }
-
-                    uploadedFiles = fileNames.toTypedArray()
-                    Log.d("UploadedFiles", "Fetched: ${uploadedFiles.contentToString()}")
+                    fileNames.add(element.fileName!!)
                 }
-            } else {
-                Log.e("API_ERROR", "Response body is null or empty.")
-                uploadedFiles = emptyArray() // 응답이 빈 경우
+                uploadedFiles = fileNames.toTypedArray()
             }
+
         } catch (e: JSONException) {
             Log.e("API_ERROR", "JSON 파싱 오류: ${e.message}", e)
             uploadedFiles = emptyArray() // JSON 오류 발생 시 처리
@@ -445,7 +403,7 @@ class SelectMediaActivity : AppCompatActivity() {
                 
                 // Apply filter if specified
                 if (filter != null) {
-                    val isUploaded = checkIfUploaded(contentUri.toString())
+                    val isUploaded = checkIfUploaded(name)
                     if (filter == isUploaded) {
                         mediaItems.add(MediaItem(name, contentUri.toString(), isFolder = false))
                     }

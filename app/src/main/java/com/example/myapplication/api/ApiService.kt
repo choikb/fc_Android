@@ -7,6 +7,7 @@ import android.webkit.MimeTypeMap
 import com.example.myapplication.compressImageAndEncode
 import com.example.myapplication.model.FireStation
 import com.example.myapplication.model.Incident
+import com.example.myapplication.model.Media
 import com.example.myapplication.model.User
 import com.example.myapplication.util.CmmnUtil
 import com.example.myapplication.util.ConfigUtil
@@ -289,6 +290,9 @@ class ApiService {
     }
 
 
+        /**
+         * 사진 업로드
+         */
     suspend fun uploadFileToCloud(fileUri: Uri, fileName:String, memoText:String, incidentId: Long?, creatorId: String?, regionName: String?) {
 
         return withContext(Dispatchers.IO) {
@@ -352,6 +356,36 @@ class ApiService {
         }
 
     }
+
+
+        suspend fun getMediaList(incidentId: String): List<Media> {
+            // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
+            return withContext(Dispatchers.IO) {
+                try {
+                    val jsonObject = JSONObject().apply {
+                        put("incidentId", incidentId)
+
+                    }
+
+                    val responseBody = CmmnUtil.requestBody(BASE_URL + "media/getMediaList", jsonObject)
+
+                    if (!responseBody.isNullOrEmpty()) {
+                        val dataArray = JSONArray(responseBody)
+
+                        val dataList = Media.fromJsonArray(dataArray)
+
+                        Log.d(TAG, "미디어 목록 가져오기 성공: ${dataList.size} 개 항목")
+                        dataList
+                    } else {
+                        emptyList()
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "🚨 미디어 목록 가져오기 실패: ${e.message}", e)
+                    emptyList()
+                }
+            }
+
+        }
 
 
 
