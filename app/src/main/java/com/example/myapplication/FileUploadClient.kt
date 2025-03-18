@@ -5,14 +5,21 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.provider.Settings
-import android.webkit.MimeTypeMap
-import okhttp3.*
-import java.io.File
-import java.io.IOException
 import android.util.Base64
+import android.util.Log
+import android.webkit.MimeTypeMap
+import android.widget.Toast
+import com.example.myapplication.api.ApiService
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.IOException
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -94,82 +101,37 @@ class FileUploadClient(private val context: Context) {
     val regionName = "충남"
 
     fun uploadFileToCloud(fileUri: Uri, fileName:String, memoText:String) {
-        val url =
-            "https://ev0tafewtt.apigw.ntruss.com/firecapture-api/v0001/media/media-c?blocking=true"
-
-        val file = File(fileUri.path)
-        //val fileName = generateFileName() // 파일 이름 생성
-        val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
-            ?: "application/octet-stream"
-
-        // Base64로 인코딩된 이미지 파일
-       // val fileData = file.readBytes()
-       // val encodedFileData = Base64.encodeToString(fileData, Base64.NO_WRAP)
-        val encodedFileData = compressImageAndEncode(file)
-        // JSON 본문 작성
-
-        val inputString = fileName.replace(" ", "")
-        val splitArray = inputString.split("_")
-        val caseName = splitArray[0]  // 사건명
-        val timestamp = splitArray[1]  // 타임스탬프
-        val fileType = splitArray[2].substringBeforeLast(".")   // 파일 타입
-        var type = ""  // var로 선언하여 변경 가능하도록 함
-        if (fileType == "ORI") {
-            type = "original"
-        } else {
-            type = "edited"
-        }
-
-        var memo = memoText
-        if (memoText.isEmpty()) {
-            memo = "내용없음"
-        }
-        val jsonBody = """
-        {
-            "fileName": "$inputString", 
-            "fileData": "$encodedFileData", 
-            "mimeType": "$mimeType", 
-            "mediaType": "photo", 
-            "incidentId": $incidentId, 
-            "creatorId": "$creatorId", 
-            "latitude": 37.5665, 
-            "longitude": 126.978, 
-            "altitude": 10.5, 
-            "locationAddress": "서울특별시 종로구", 
-            "resolution": "1920x1080", 
-            "hashtags": "#서울 #사진", 
-            "memo": "$memo", 
-            "address": "서울시 종로구", 
-            "regionName": "$regionName", 
-            "capturedAt": "2023-04-01 12:00:00", 
-            "version": "$type"
-        }
-        """
-
-        val requestBody = jsonBody
-            .toRequestBody("application/json".toMediaTypeOrNull())
-
-        val request = Request.Builder()
-            .url(url)
-            .post(requestBody)
-            .header("Content-Type", "application/json")
-            .build()
-
-        val client = OkHttpClient()
-
-        client.newCall(request).enqueue(object : Callback {
-            override fun onFailure(call: Call, e: IOException) {
-                println("파일 업로드 실패: ${e.message}")
-            }
-
-            override fun onResponse(call: Call, response: Response) {
-                if (response.isSuccessful) {
-                    println("파일 업로드 성공!")
-                } else {
-                    println("파일 업로드 실패, 상태 코드: ${response.code}")
+        // Use coroutines to call the ApiService in a background thread
+        val coroutineScope = CoroutineScope(Dispatchers.IO)
+        
+        coroutineScope.launch {
+            try {
+                // Call the ApiService with real metadata extraction
+                ApiService.uploadFileToCloud(
+                    context = context,
+                    fileUri = fileUri,
+                    fileName = fileName,
+                    memoText = memoText,
+                    incidentId = incidentId,
+                    creatorId = creatorId,
+                    regionName = regionName
+                )
+                
+                // Show success message on the main thread
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "파일이 성공적으로 업로드되었습니다.", Toast.LENGTH_SHORT).show()
+                }
+            } catch (e: Exception) {
+                Log.e("FileUploadClient", "Error uploading file", e)
+                
+                // Show error message on the main thread
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "업로드 중 오류가 발생했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
                 }
             }
-        })
+        }
+
+        // HTTP request code has been replaced with ApiService call above
     }
 
     // 파일명 생성: 현재 날짜와 시간 기반으로 유니크한 파일명 생성

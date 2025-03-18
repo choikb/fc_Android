@@ -1,7 +1,9 @@
 package com.example.myapplication
 
+import android.Manifest
 import android.content.ContentUris
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.net.Uri
 import android.os.Build
@@ -12,8 +14,11 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.GridLayoutManager
@@ -49,6 +54,32 @@ class SelectMediaActivity : AppCompatActivity() {
 
     private val mediaItems = mutableListOf<MediaItem>()
     private val selectedPhotoUris = mutableListOf<Uri>()
+    
+    // Location permission request code
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1001
+    
+    // Location permission launcher
+    private val requestPermissionLauncher = registerForActivityResult(
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val locationPermissionsGranted = permissions.entries.all {
+            it.key in listOf(Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION) && it.value
+        }
+        
+        if (locationPermissionsGranted) {
+            // Permissions granted, proceed with upload
+            proceedWithUpload()
+        } else {
+            // Permissions denied, inform user
+            Toast.makeText(
+                this,
+                "위치 권한이 없어 위치 정보가 제한될 수 있습니다.",
+                Toast.LENGTH_LONG
+            ).show()
+            // Still proceed with upload but without location data
+            proceedWithUpload()
+        }
+    }
     private var selectedFolder: MediaItem? = null
     private lateinit var uploadedFiles: Array<String>
     private lateinit var mediaAdapter: MediaAdapter
@@ -62,6 +93,11 @@ class SelectMediaActivity : AppCompatActivity() {
         uploadButton = findViewById(R.id.uploadButton)
         memoEditText = findViewById(R.id.memoEditText)
         layoutBackToFolders = findViewById(R.id.layoutBackToFolders)
+        
+        // Request location permissions immediately when activity starts
+        if (!checkLocationPermissions()) {
+            requestLocationPermissions()
+        }
 
         setupRecyclerView()
         loadFolders() // 초기 폴더 목록 로드
@@ -161,6 +197,35 @@ class SelectMediaActivity : AppCompatActivity() {
     }
 
     private fun uploadSelectedPhotos() {
+        // Check location permissions before uploading
+        if (checkLocationPermissions()) {
+            // Permissions already granted, proceed with upload
+            proceedWithUpload()
+        } else {
+            // Request permissions
+            requestLocationPermissions()
+        }
+    }
+    
+    private fun checkLocationPermissions(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED || 
+        ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+    
+    private fun requestLocationPermissions() {
+        requestPermissionLauncher.launch(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            )
+        )
+    }
+    
+    private fun proceedWithUpload() {
         val memo = memoEditText.text.toString().trim() // Trimmed memo text
 
         if (selectedPhotoUris.isEmpty()) {
@@ -183,20 +248,6 @@ class SelectMediaActivity : AppCompatActivity() {
             Toast.makeText(this, "유효하지 않은 파일 경로입니다.", Toast.LENGTH_SHORT).show()
         }
 
-//
-//        selectedPhotoUris.forEach { uri ->
-//            val filePath = getRealFilePathFromUri(uri)
-//            if (filePath != null) {
-//                val file = File(filePath)
-//                if (file.exists()) {
-//                    uploadImageToCloud(uri, file.name, memo)
-//                } else {
-//                    Toast.makeText(this, "파일이 존재하지 않습니다: $filePath", Toast.LENGTH_SHORT).show()
-//                }
-//            } else {
-//                Toast.makeText(this, "유효하지 않은 파일 경로입니다.", Toast.LENGTH_SHORT).show()
-//            }
-//        }
         mediaAdapter.clearSelectedItems()
         //getUploadedMediaNameAll()
         Toast.makeText(this, "파일이 업로드 되었습니다.", Toast.LENGTH_SHORT).show()

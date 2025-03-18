@@ -1,11 +1,13 @@
 package com.example.myapplication
 
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
+import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.*
 import android.net.Uri
@@ -17,6 +19,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import android.widget.AdapterView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.api.ApiService
@@ -46,6 +49,9 @@ class PhotoResultDialogFragment : DialogFragment() {
     private var selectedIconColor: Int = Color.RED
     private var selectedIcon: Int = 0 // 0: 선택 없음, 1-5: 아이콘 번호
     private var isDrawMode: Boolean = true // true: 그리기 모드, false: 아이콘 모드
+    
+    // Callback for permission result
+    private var permissionResultCallback: ((Boolean) -> Unit)? = null
     private val iconMemos = HashMap<Int, String>() // 아이콘별 메모 저장
     private val iconColors = HashMap<Int, Int>() // 아이콘별 색상 저장
 
@@ -163,67 +169,36 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
             saveCurrentMemo()
             val memoText = iconMemos.toString()
 
-            androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                .setTitle("사진 저장")
-                .setMessage("저장 하시겠습니까?")
-                .setPositiveButton("네") { dialog, _ ->
-                    dialog.dismiss()
-                    val finalBitmap = if (isEditing) {
-                        drawView.getBitmapWithBackground(photoBitmap!!)  // 🎨 원본 포함된 비트맵 가져오기
+            if(!checkLocationPermissions()){
+                // Request location permissions
+                permissionResultCallback = { isGranted ->
+                    if (isGranted) {
+                        // Permission granted, continue with save process
+                        showSaveConfirmDialog(isEditing, memoText)
                     } else {
-                        photoBitmap
+                        // Permission denied, show message
+                        Toast.makeText(
+                            requireContext(),
+                            "위치 권한 동의 없이 업로드가 허용되지 않습니다.",
+                            Toast.LENGTH_LONG
+                        ).show()
                     }
-
-                    //Boolean isori
-                    // 원본 사진 저장
-                    photoBitmap?.let {
-
-                        // savePhoto(it, fileName, "Pictures/MyApp/Original")  // 경로는 이대로 두고
-                        // val fileName = "ori_${System.currentTimeMillis()}.jpg"
-                        var caseName = IncidentManager.incidentName
-                        val fileName = caseName?.let { it1 -> generateFileName(false, it1) }
-                        val path = "Pictures/MyApp/${caseName}" // 상대 경로
-
-                        // 원본 사진 저장
-                        val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
-                        if (fileUri != null) {
-                            uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
-                            Toast.makeText(context, "원본 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "원본 파일 저장 실패", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    // 편집된 사진 저장 및 업로드
-                    if (isEditing) {
-                        finalBitmap?.let {
-                            // val fileName = "edit_${System.currentTimeMillis()}.jpg"
-                            // val path = "Pictures/MyApp/사건1"  // 편집된 사진 경로 설정
-                            var caseName = IncidentManager.incidentName
-                            val fileName = caseName?.let { it1 -> generateFileName(true, it1) }
-                            val path = "Pictures/MyApp/${caseName}" // 상대 경로
-
-                            // 편집된 사진 저장
-                            val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
-                            if (fileUri != null) {
-                                uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
-                                Toast.makeText(context, "편집된 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
-                            } else {
-                                Toast.makeText(context, "편집 파일 저장 실패", Toast.LENGTH_SHORT).show()
-                            }
-                        }
-                    }
-
-                    dismiss() // 다이얼로그 닫기
-
-
+                }
+                requestLocationPermissions()
+                // Show message to user
+                Toast.makeText(
+                    requireContext(),
+                    "위치 권한이 필요합니다. 권한을 허용해주세요.",
+                    Toast.LENGTH_LONG
+                ).show()
+                return@setOnClickListener
+            }else{
+                showSaveConfirmDialog(isEditing, memoText)
             }
-            .setNegativeButton("취소") { dialog, _ ->
-                dialog.dismiss()
-            }
-            .show()
-            
 
         }
+
+
         // 취소 버튼 클릭
         buttonCancel.setOnClickListener {
             dismiss()
@@ -241,6 +216,96 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
         } else {
             "${caseName}_${currentDate}_ORI.jpg"
         }
+    }
+
+    private fun checkLocationPermissions(): Boolean {
+        return ContextCompat.checkSelfPermission(
+            requireContext(), Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED ||
+                ContextCompat.checkSelfPermission(
+                    requireContext(), Manifest.permission.ACCESS_COARSE_LOCATION
+                ) == PackageManager.PERMISSION_GRANTED
+    }
+    
+    // Location permission request code
+    private val LOCATION_PERMISSION_REQUEST_CODE = 1001
+    
+    private fun requestLocationPermissions() {
+        requestPermissions(
+            arrayOf(
+                Manifest.permission.ACCESS_FINE_LOCATION,
+                Manifest.permission.ACCESS_COARSE_LOCATION
+            ),
+            LOCATION_PERMISSION_REQUEST_CODE
+        )
+    }
+    
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            val isGranted = grantResults.isNotEmpty() && 
+                    grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            
+            // Call the permission result callback if it exists
+            permissionResultCallback?.invoke(isGranted)
+            permissionResultCallback = null  // Clear the callback after use
+        }
+    }
+    
+    private fun showSaveConfirmDialog(isEditing: Boolean, memoText: String) {
+        androidx.appcompat.app.AlertDialog.Builder(requireContext())
+            .setTitle("사진 저장")
+            .setMessage("저장 하시겠습니까?")
+            .setPositiveButton("네") { dialog, _ ->
+                dialog.dismiss()
+                
+                val finalBitmap = if (isEditing) {
+                    drawView.getBitmapWithBackground(photoBitmap!!)  // 🎨 원본 포함된 비트맵 가져오기
+                } else {
+                    photoBitmap
+                }
+                
+                // 원본 사진 저장
+                photoBitmap?.let {
+                    var caseName = IncidentManager.incidentName
+                    val fileName = caseName?.let { it1 -> generateFileName(false, it1) }
+                    val path = "Pictures/MyApp/${caseName}" // 상대 경로
+
+                    // 원본 사진 저장
+                    val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
+                    if (fileUri != null) {
+                        uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
+                        Toast.makeText(context, "원본 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
+                    } else {
+                        Toast.makeText(context, "원본 파일 저장 실패", Toast.LENGTH_SHORT).show()
+                    }
+                }
+                
+                // 편집된 사진 저장 및 업로드
+                if (isEditing) {
+                    finalBitmap?.let {
+                        var caseName = IncidentManager.incidentName
+                        val fileName = caseName?.let { it1 -> generateFileName(true, it1) }
+                        val path = "Pictures/MyApp/${caseName}" // 상대 경로
+
+                        // 편집된 사진 저장
+                        val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
+                        if (fileUri != null) {
+                            uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
+                            Toast.makeText(context, "편집된 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
+                        } else {
+                            Toast.makeText(context, "편집 파일 저장 실패", Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                
+                dismiss() // 다이얼로그 닫기
+            }
+            .setNegativeButton("취소") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun getRealFilePathFromUri(uri: Uri): String? {
@@ -273,12 +338,13 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
                 val regionName = prefs.getString("CITY", null)
                 lifecycleScope.launch {
                     ApiService.uploadFileToCloud(
-                        Uri.fromFile(file),
-                        fileName,
-                        memoText,
-                        incidentId,
-                        creatorId,
-                        regionName
+                        context = requireContext(),
+                        fileUri = Uri.fromFile(file),
+                        fileName = fileName,
+                        memoText = memoText,
+                        incidentId = incidentId,
+                        creatorId = creatorId,
+                        regionName = regionName
                     )
                 }
 
