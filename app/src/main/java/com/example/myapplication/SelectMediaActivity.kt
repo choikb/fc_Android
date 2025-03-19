@@ -1,6 +1,7 @@
 package com.example.myapplication
 
 import android.Manifest
+import android.app.ProgressDialog
 import android.content.ContentUris
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -15,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContentProviderCompat.requireContext
@@ -28,7 +30,9 @@ import java.io.File
 import com.example.myapplication.media.MediaAdapter
 
 import com.example.myapplication.media.MediaItem // 필요한 패키지 경로 확인 후 수정
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
@@ -163,7 +167,7 @@ class SelectMediaActivity : AppCompatActivity() {
 
         val fileName = filePath.substringAfterLast("/")
 
-        return uploadedFiles.contains(fileName)
+        return uploadedFiles.contains(fileName.replace("\\s".toRegex(), ""))
     }
 
     private fun getUploadedMediaNames(incidentId: String) {
@@ -181,6 +185,16 @@ class SelectMediaActivity : AppCompatActivity() {
                     fileNames.add(element.fileName!!)
                 }
                 uploadedFiles = fileNames.toTypedArray()
+                
+                // Trigger the current radio filter after loading media names
+                withContext(Dispatchers.Main) {
+                    // Apply the current filter based on which radio button is checked
+                    when (radioGroupFilter.checkedRadioButtonId) {
+                        R.id.radioAll -> loadPhotos(null) // All photos
+                        R.id.radioUploaded -> loadPhotos(true) // Uploaded photos
+                        R.id.radioNotUploaded -> loadPhotos(false) // Not uploaded photos
+                    }
+                }
             }
 
         } catch (e: JSONException) {
@@ -233,24 +247,76 @@ class SelectMediaActivity : AppCompatActivity() {
             return
         }
 
-        val uri = selectedPhotoUris.first() // ✅ 첫 번째 사진만 업로드
-        val filePath = getRealFilePathFromUri(uri)
+        // Get count of selected photos
+        val photoCount = selectedPhotoUris.size
+        val photoText = if (photoCount > 1) "${photoCount}개의 사진" else "사진"
 
-        if (filePath != null) {
-            val file = File(filePath)
-            if (file.exists()) {
-                uploadImageToCloud(uri, file.name, memo)
-                Toast.makeText(this, "파일이 업로드 되었습니다.", Toast.LENGTH_SHORT).show()
-            } else {
-                Toast.makeText(this, "파일이 존재하지 않습니다: $filePath", Toast.LENGTH_SHORT).show()
+        AlertDialog.Builder(this)
+            .setTitle("사진 업로드")
+            .setMessage("${photoText}을 업로드 하시겠습니까?")
+            .setPositiveButton("네") { dialog, _ ->
+                dialog.dismiss()
+
+                // Show loading indicator
+                val loadingDialog = ProgressDialog(this).apply {
+                    setMessage("파일 업로드 중...")
+                    setCancelable(false)
+                    show()
+                }
+                
+                // Launch coroutine to handle multiple uploads
+                lifecycleScope.launch {
+                    var successCount = 0
+                    var failureCount = 0
+                    
+                    // Process each selected photo
+                    for (uri in selectedPhotoUris) {
+                        val filePath = getRealFilePathFromUri(uri)
+                        if (filePath != null) {
+                            val file = File(filePath)
+                            if (file.exists()) {
+                                val success = uploadImageToCloud(uri, file.name, memo)
+                                if (success) {
+                                    successCount++
+                                } else {
+                                    failureCount++
+                                }
+                            } else {
+                                failureCount++
+                                Log.e("SelectMediaActivity", "파일이 존재하지 않습니다: $filePath")
+                            }
+                        } else {
+                            failureCount++
+                            Log.e("SelectMediaActivity", "잘못된 파일 경로")
+                        }
+                    }
+                    
+                    // Dismiss loading dialog
+                    loadingDialog.dismiss()
+                    
+                    // Show appropriate message based on results
+                    if (successCount > 0) {
+                        val resultMessage = if (failureCount > 0) {
+                            "${successCount}개 업로드 성공, ${failureCount}개 실패"
+                        } else {
+                            if (successCount == 1) "파일이 성공적으로 업로드 되었습니다." else "${successCount}개의 파일이 성공적으로 업로드 되었습니다."
+                        }
+                        Toast.makeText(this@SelectMediaActivity, resultMessage, Toast.LENGTH_SHORT).show()
+                        getUploadedMediaNames(IncidentManager.incidentId.toString())
+                        mediaAdapter.clearSelectedItems()
+                        selectedPhotoUris.clear() // Clear the list of selected photo URIs
+                    } else {
+                        Toast.makeText(this@SelectMediaActivity, "모든 파일 업로드에 실패했습니다.", Toast.LENGTH_SHORT).show()
+                    }
+                }
+
+                //getUploadedMediaNameAll()
+                // Toast message is now handled in the upload process
             }
-        } else {
-            Toast.makeText(this, "유효하지 않은 파일 경로입니다.", Toast.LENGTH_SHORT).show()
-        }
-
-        mediaAdapter.clearSelectedItems()
-        //getUploadedMediaNameAll()
-        Toast.makeText(this, "파일이 업로드 되었습니다.", Toast.LENGTH_SHORT).show()
+            .setNegativeButton("취소") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .show()
     }
 
     private fun getRealFilePathFromUri(uri: Uri): String? {
@@ -275,20 +341,26 @@ class SelectMediaActivity : AppCompatActivity() {
     }
 
 
-    private fun uploadImageToCloud(uri: Uri, fileName: String, memo: String) {
+    private suspend fun uploadImageToCloud(uri: Uri, fileName: String, memo: String): Boolean {
         val filePath = getRealFilePathFromUri(uri)
         if (filePath != null) {
             val file = File(filePath)
             if (file.exists()) {
                 val fileUploadClient = FileUploadClient(this)
-                fileUploadClient.uploadFileToCloud(Uri.fromFile(file), fileName = fileName, memo)
+                
+                // Call the suspend function and return its result
+                return fileUploadClient.uploadFileToCloud(Uri.fromFile(file), fileName = fileName, memo)
             } else {
-                Toast.makeText(this, "파일이 존재하지 않습니다: $filePath", Toast.LENGTH_SHORT).show()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(this@SelectMediaActivity, "파일이 존재하지 않습니다: $filePath", Toast.LENGTH_SHORT).show()
+                }
             }
         } else {
-            Toast.makeText(this, "잘못된 파일 경로입니다.", Toast.LENGTH_SHORT).show()
+            withContext(Dispatchers.Main) {
+                Toast.makeText(this@SelectMediaActivity, "잘못된 파일 경로입니다.", Toast.LENGTH_SHORT).show()
+            }
         }
-
+        return false
     }
 
 
@@ -315,6 +387,7 @@ class SelectMediaActivity : AppCompatActivity() {
         mediaAdapter = MediaAdapter(this, mediaItems) { mediaItem ->
             if (mediaItem.isFolder) {
                 mediaAdapter.clearSelectedItems() // ✅ 폴더 이동 시 기존 선택 해제
+                selectedPhotoUris.clear() // Clear the list of selected photo URIs when changing folders
                 selectedFolder = mediaItem
                 layoutBackToFolders.visibility = View.VISIBLE
                 radioGroupFilter.visibility = View.VISIBLE
@@ -343,6 +416,7 @@ class SelectMediaActivity : AppCompatActivity() {
     override fun onBackPressed() {
         if (layoutBackToFolders.visibility == View.VISIBLE) {
             mediaAdapter.clearSelectedItems() // ✅ 폴더 화면으로 돌아갈 때 선택 초기화
+            selectedPhotoUris.clear() // Clear the list of selected photo URIs when going back to folders
             loadFolders()
         } else {
             super.onBackPressed()

@@ -467,7 +467,154 @@ class ApiService {
     }
 
 
-        suspend fun getMediaList(incidentId: String): List<Media> {
+        /**
+     * 사진 업로드 (EXIF 메타데이터 우선 사용)
+     * 이 함수는 기존 uploadFileToCloud와 유사하지만 현재 위치 대신 이미지의 EXIF 메타데이터를 우선적으로 사용합니다.
+     */
+    suspend fun uploadFileWithExifMetadata(context: Context, fileUri: Uri, fileName:String, memoText:String, incidentId: Long?, creatorId: String?, regionName: String?): Boolean {
+
+        return withContext(Dispatchers.IO) {
+            try {
+                val file = File(fileUri.path)
+                val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(file.extension)
+                    ?: "application/octet-stream"
+
+                val encodedFileData = compressImageAndEncode(file)
+
+                val inputString = fileName.replace(" ", "")
+                val splitArray = inputString.split("_")
+
+                var fileType = ""
+                var type = ""
+
+                if(splitArray.isNotEmpty()){
+                    fileType = splitArray[splitArray.size-1].split(".")[0]
+
+                    if (fileType == "ORI"){
+                        type = "original"
+                    }else if(fileType == "EDIT"){
+                        type = "edited"
+                    }else{
+                        type = "original"
+                    }
+                }else{
+                    type = "original"
+                }
+
+                val memo = if (memoText.isEmpty()) "내용없음" else memoText
+
+                // Extract image metadata
+                val exifInterface = ExifInterface(file.path)
+                
+                // Get location from EXIF data only
+                val latLong = FloatArray(2)
+                val hasExifLocation = exifInterface.getLatLong(latLong)
+                
+                // Default coordinates (Seoul) if EXIF data is not available
+                var latitude = 37.5665
+                var longitude = 126.978
+                
+                if (hasExifLocation) {
+                    // Use EXIF data
+                    latitude = latLong[0].toDouble()
+                    longitude = latLong[1].toDouble()
+                    Log.d("ApiService", "Using EXIF location: $latitude, $longitude")
+                } else {
+                    Log.d("ApiService", "No EXIF location data, using default location")
+                }
+                
+                // Get altitude
+                val altitudeValue = exifInterface.getAttribute(ExifInterface.TAG_GPS_ALTITUDE)
+                val altitude = altitudeValue?.toDoubleOrNull() ?: 10.5
+                
+                // Get image resolution
+                val width = exifInterface.getAttribute(ExifInterface.TAG_IMAGE_WIDTH)?.toIntOrNull() ?: 1920
+                val height = exifInterface.getAttribute(ExifInterface.TAG_IMAGE_LENGTH)?.toIntOrNull() ?: 1080
+                val resolution = "${width}x${height}"
+                
+                // Get capture date and time
+                val dateTime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME)
+                val capturedAt = if (dateTime != null) {
+                    try {
+                        // Convert EXIF date format ("yyyy:MM:dd HH:mm:ss") to "yyyy-MM-dd HH:mm:ss"
+                        val exifFormat = SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.getDefault())
+                        val date = exifFormat.parse(dateTime)
+                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(date ?: Date())
+                    } catch (e: Exception) {
+                        // If date parsing fails, use current time
+                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                    }
+                } else {
+                    // If no date in EXIF, use current time
+                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                }
+                
+                // Get location address using Geocoder with Korean locale
+                val geocoder = Geocoder(context, Locale.KOREA)
+                val locationAddress = try {
+                    val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+                    if (addresses != null && addresses.isNotEmpty()) {
+                        val address = addresses[0]
+                        val adminArea = address.adminArea ?: ""
+                        val locality = address.locality ?: ""
+                        val thoroughfare = address.thoroughfare ?: ""
+                        val subThoroughfare = address.subThoroughfare ?: ""
+                        "$adminArea $locality $thoroughfare $subThoroughfare".trim()
+                    } else {
+                        "위치 정보 없음"
+                    }
+                } catch (e: Exception) {
+                    Log.e("ApiService", "Geocoding failed", e)
+                    "위치 정보 없음"
+                }
+                
+                // Generate hashtags based on location
+                val hashtags = if (locationAddress != "위치 정보 없음") {
+                    "#${locationAddress.split(" ")[0]} #사진"
+                } else {
+                    "#사진"
+                }
+                
+                val jsonObject = JSONObject().apply {
+                    put("fileName", inputString)
+                    put("fileData", encodedFileData)
+                    put("mimeType", mimeType)
+                    put("mediaType", "photo")
+                    put("incidentId", incidentId)
+                    put("creatorId", creatorId)
+                    put("latitude", latitude)
+                    put("longitude", longitude)
+                    put("altitude", altitude)
+                    put("locationAddress", locationAddress)
+                    put("resolution", resolution)
+                    put("hashtags", hashtags)
+                    put("memo", memo)
+                    put("address", locationAddress)
+                    put("regionName", regionName)
+                    put("capturedAt", capturedAt)
+                    put("version", type)
+                }
+
+                val responseBody = CmmnUtil.requestBody(BASE_URL + "media/uploadPhotoData", jsonObject)
+                
+                // Parse the response to determine success
+                if (!responseBody.isNullOrEmpty()) {
+                    val jsonResponse = JSONObject(responseBody)
+                    val success = jsonResponse.optBoolean("success", false)
+                    
+                    Log.d(TAG, "Upload response: $responseBody")
+                    return@withContext success
+                }
+                return@withContext false
+                
+            } catch (e: Exception) {
+                Log.e(TAG, "🚨 EXIF 메타데이터 기반 파일 업로드 실패: ${e.message}", e)
+                return@withContext false
+            }
+        }
+    }
+
+    suspend fun getMediaList(incidentId: String): List<Media> {
             // Dispatchers.IO를 사용하여 백그라운드 스레드에서 실행
             return withContext(Dispatchers.IO) {
                 try {

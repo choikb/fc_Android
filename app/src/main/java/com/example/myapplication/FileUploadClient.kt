@@ -100,38 +100,25 @@ class FileUploadClient(private val context: Context) {
     //val regionName = prefs.getString("CITY", null)
     val regionName = "충남"
 
-    fun uploadFileToCloud(fileUri: Uri, fileName:String, memoText:String) {
-        // Use coroutines to call the ApiService in a background thread
-        val coroutineScope = CoroutineScope(Dispatchers.IO)
-        
-        coroutineScope.launch {
-            try {
-                // Call the ApiService with real metadata extraction
-                ApiService.uploadFileToCloud(
-                    context = context,
-                    fileUri = fileUri,
-                    fileName = fileName,
-                    memoText = memoText,
-                    incidentId = incidentId,
-                    creatorId = creatorId,
-                    regionName = regionName
-                )
-                
-                // Show success message on the main thread
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "파일이 성공적으로 업로드되었습니다.", Toast.LENGTH_SHORT).show()
-                }
-            } catch (e: Exception) {
-                Log.e("FileUploadClient", "Error uploading file", e)
-                
-                // Show error message on the main thread
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(context, "업로드 중 오류가 발생했습니다: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
+    suspend fun uploadFileToCloud(fileUri: Uri, fileName:String, memoText:String): Boolean {
+        return try {
+            // Call the new ApiService that prioritizes EXIF metadata for location
+            val result = ApiService.uploadFileWithExifMetadata(
+                context = context,
+                fileUri = fileUri,
+                fileName = fileName,
+                memoText = memoText,
+                incidentId = incidentId,
+                creatorId = creatorId,
+                regionName = regionName
+            )
+            
+            // Return the result from the API call
+            result
+        } catch (e: Exception) {
+            Log.e("FileUploadClient", "Error uploading file", e)
+            false
         }
-
-        // HTTP request code has been replaced with ApiService call above
     }
 
     // 파일명 생성: 현재 날짜와 시간 기반으로 유니크한 파일명 생성
