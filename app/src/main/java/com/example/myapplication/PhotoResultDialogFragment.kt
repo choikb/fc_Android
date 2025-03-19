@@ -4,6 +4,7 @@ package com.example.myapplication
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.AlertDialog
+import android.app.ProgressDialog
 import android.content.ContentValues
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
@@ -23,7 +24,9 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.DialogFragment
 import androidx.lifecycle.lifecycleScope
 import com.example.myapplication.api.ApiService
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
@@ -259,6 +262,13 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
             .setMessage("저장 하시겠습니까?")
             .setPositiveButton("네") { dialog, _ ->
                 dialog.dismiss()
+
+                // Show loading indicator
+                val loadingDialog = ProgressDialog(requireContext()).apply {
+                    setMessage("파일 업로드 중...")
+                    setCancelable(false)
+                    show()
+                }
                 
                 val finalBitmap = if (isEditing) {
                     drawView.getBitmapWithBackground(photoBitmap!!)  // 🎨 원본 포함된 비트맵 가져오기
@@ -266,41 +276,64 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
                     photoBitmap
                 }
                 
-                // 원본 사진 저장
-                photoBitmap?.let {
-                    var caseName = IncidentManager.incidentName
-                    val fileName = caseName?.let { it1 -> generateFileName(false, it1) }
-                    val path = "Pictures/MyApp/${caseName}" // 상대 경로
+                // Launch a coroutine to handle the uploads
+                lifecycleScope.launch {
+                    try {
+                        // Upload original photo if available
+                        photoBitmap?.let {
+                            var caseName = IncidentManager.incidentName
+                            val fileName = caseName?.let { it1 -> generateFileName(false, it1) }
+                            val path = "Pictures/MyApp/${caseName}" // 상대 경로
 
-                    // 원본 사진 저장
-                    val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
-                    if (fileUri != null) {
-                        uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
-                        Toast.makeText(context, "원본 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
-                    } else {
-                        Toast.makeText(context, "원본 파일 저장 실패", Toast.LENGTH_SHORT).show()
-                    }
-                }
-                
-                // 편집된 사진 저장 및 업로드
-                if (isEditing) {
-                    finalBitmap?.let {
-                        var caseName = IncidentManager.incidentName
-                        val fileName = caseName?.let { it1 -> generateFileName(true, it1) }
-                        val path = "Pictures/MyApp/${caseName}" // 상대 경로
+                            // 원본 사진 저장
+                            val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
+                            if (fileUri != null) {
+                                // Wait for the upload to complete
+                                val success = uploadImageAsync(fileUri, fileName, memoText)
+                                if (success) {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(context, "원본 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            } else {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "원본 파일 저장 실패", Toast.LENGTH_SHORT).show()
+                                }
+                            }
+                        }
+                        
+                        // Upload edited photo if editing
+                        if (isEditing) {
+                            finalBitmap?.let {
+                                var caseName = IncidentManager.incidentName
+                                val fileName = caseName?.let { it1 -> generateFileName(true, it1) }
+                                val path = "Pictures/MyApp/${caseName}" // 상대 경로
 
-                        // 편집된 사진 저장
-                        val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
-                        if (fileUri != null) {
-                            uploadImage(fileUri, fileName, memoText)  // 클라우드로 업로드
-                            Toast.makeText(context, "편집된 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
-                        } else {
-                            Toast.makeText(context, "편집 파일 저장 실패", Toast.LENGTH_SHORT).show()
+                                // 편집된 사진 저장
+                                val fileUri = fileName?.let { it1 -> savePhoto(it, it1, path) }
+                                if (fileUri != null) {
+                                    // Wait for the upload to complete
+                                    val success = uploadImageAsync(fileUri, fileName, memoText)
+                                    if (success) {
+                                        withContext(Dispatchers.Main) {
+                                            Toast.makeText(context, "편집된 파일 저장 및 업로드 완료.", Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        Toast.makeText(context, "편집 파일 저장 실패", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        }
+                    } finally {
+                        // Always dismiss the loading dialog when done
+                        withContext(Dispatchers.Main) {
+                            loadingDialog.dismiss()
+                            dismiss() // 다이얼로그 닫기
                         }
                     }
                 }
-                
-                dismiss() // 다이얼로그 닫기
             }
             .setNegativeButton("취소") { dialog, _ ->
                 dialog.dismiss()
@@ -353,6 +386,50 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
             }
         } else {
             Toast.makeText(context, "잘못된 파일 경로입니다.", Toast.LENGTH_SHORT).show()
+        }
+    }
+    
+    // New method that returns a Boolean indicating success/failure and waits for upload to complete
+    private suspend fun uploadImageAsync(uri: Uri, fileName: String, memoText: String = ""): Boolean {
+        val filePath = getRealFilePathFromUri(uri)
+
+        if (filePath != null) {
+            val file = File(filePath)
+            if (file.exists()) {
+                var incidentId = IncidentManager.incidentId
+                val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
+                val creatorId = prefs.getString("ANDROID_ID", null)
+                val regionName = prefs.getString("CITY", null)
+                
+                try {
+                    // This will wait for the upload to complete
+                    ApiService.uploadFileToCloud(
+                        context = requireContext(),
+                        fileUri = Uri.fromFile(file),
+                        fileName = fileName,
+                        memoText = memoText,
+                        incidentId = incidentId,
+                        creatorId = creatorId,
+                        regionName = regionName
+                    )
+                    return true
+                } catch (e: Exception) {
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(context, "업로드 오류: ${e.message}", Toast.LENGTH_SHORT).show()
+                    }
+                    return false
+                }
+            } else {
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(context, "파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
+                }
+                return false
+            }
+        } else {
+            withContext(Dispatchers.Main) {
+                Toast.makeText(context, "잘못된 파일 경로입니다.", Toast.LENGTH_SHORT).show()
+            }
+            return false
         }
     }
 
