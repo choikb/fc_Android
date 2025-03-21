@@ -302,7 +302,22 @@ class ApiService {
         /**
          * 사진 업로드
          */
-    suspend fun uploadFileToCloud(context: Context, fileUri: Uri, fileName:String, memoText:String, incidentId: Long?, creatorId: String?, regionName: String?) {
+    suspend fun uploadFileToCloud(
+        context: Context, 
+        fileUri: Uri, 
+        fileName: String, 
+        memoText: String, 
+        incidentId: Long?, 
+        creatorId: String?, 
+        regionName: String?,
+        latitude: Double = 37.5665,
+        longitude: Double = 126.978,
+        altitude: Double = 10.5,
+        locationAddress: String = "위치 정보 없음",
+        capturedAt: String = "",
+        resolution: String = "1920x1080",
+        hashtags: String = "#사진"
+    ) {
 
         return withContext(Dispatchers.IO) {
             try {
@@ -335,105 +350,34 @@ class ApiService {
                     memo = "내용없음"
                 }
 
-                // Extract image metadata
+                // Extract image metadata for additional information if needed
                 val exifInterface = ExifInterface(file.path)
                 
-                // Try to get location from EXIF data first
-                val latLong = FloatArray(2)
-                val hasExifLocation = exifInterface.getLatLong(latLong)
-                
-                // Try to get current device location if EXIF doesn't have it
-                val locationManager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-                val hasLocationPermission = (
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
-                    ContextCompat.checkSelfPermission(context, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
-                )
-                
-                // Variables to store the final coordinates
-                var latitude = 37.5665  // Default to Seoul if no location available
-                var longitude = 126.978
-                
-                if (hasExifLocation) {
-                    // Use EXIF data if available
-                    latitude = latLong[0].toDouble()
-                    longitude = latLong[1].toDouble()
-                    Log.d("ApiService", "Using EXIF location: $latitude, $longitude")
-                } else if (hasLocationPermission) {
-                    try {
-                        // Try to get last known location from GPS or network
-                        val gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-                        val networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-                        
-                        // Use the most recent location
-                        val deviceLocation = when {
-                            gpsLocation != null && networkLocation != null -> 
-                                if (gpsLocation.time > networkLocation.time) gpsLocation else networkLocation
-                            gpsLocation != null -> gpsLocation
-                            networkLocation != null -> networkLocation
-                            else -> null
+                // Use the provided values for location information
+                // If capturedAt is empty, generate it
+                val finalCapturedAt = if (capturedAt.isEmpty()) {
+                    val dateTime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME)
+                    if (dateTime != null) {
+                        try {
+                            // Convert EXIF date format ("yyyy:MM:dd HH:mm:ss") to "yyyy-MM-dd HH:mm:ss"
+                            val exifFormat = SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.getDefault())
+                            val date = exifFormat.parse(dateTime)
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(date ?: Date())
+                        } catch (e: Exception) {
+                            // If date parsing fails, use current time
+                            SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
                         }
-                        
-                        if (deviceLocation != null) {
-                            latitude = deviceLocation.latitude
-                            longitude = deviceLocation.longitude
-                            Log.d("ApiService", "Using device location: $latitude, $longitude")
-                        }
-                    } catch (e: Exception) {
-                        Log.e("ApiService", "Error getting device location", e)
-                    }
-                }
-                
-                // Get altitude
-                val altitudeValue = exifInterface.getAttribute(ExifInterface.TAG_GPS_ALTITUDE)
-                val altitude = altitudeValue?.toDoubleOrNull() ?: 10.5
-                
-                // Get image resolution
-                val width = exifInterface.getAttribute(ExifInterface.TAG_IMAGE_WIDTH)?.toIntOrNull() ?: 1920
-                val height = exifInterface.getAttribute(ExifInterface.TAG_IMAGE_LENGTH)?.toIntOrNull() ?: 1080
-                val resolution = "${width}x${height}"
-                
-                // Get capture date and time
-                val dateTime = exifInterface.getAttribute(ExifInterface.TAG_DATETIME)
-                val capturedAt = if (dateTime != null) {
-                    try {
-                        // Convert EXIF date format ("yyyy:MM:dd HH:mm:ss") to "yyyy-MM-dd HH:mm:ss"
-                        val exifFormat = SimpleDateFormat("yyyy:MM:dd HH:mm:ss", Locale.getDefault())
-                        val date = exifFormat.parse(dateTime)
-                        SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(date ?: Date())
-                    } catch (e: Exception) {
-                        // If date parsing fails, use current time
+                    } else {
+                        // If no date in EXIF, use current time
                         SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
                     }
                 } else {
-                    // If no date in EXIF, use current time
-                    SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+                    capturedAt
                 }
                 
-                // Get location address using Geocoder with Korean locale
-                val geocoder = Geocoder(context, Locale.KOREA)
-                val locationAddress = try {
-                    val addresses = geocoder.getFromLocation(latitude, longitude, 1)
-                    if (addresses != null && addresses.isNotEmpty()) {
-                        val address = addresses[0]
-                        val adminArea = address.adminArea ?: ""
-                        val locality = address.locality ?: ""
-                        val thoroughfare = address.thoroughfare ?: ""
-                        val subThoroughfare = address.subThoroughfare ?: ""
-                        "$adminArea $locality $thoroughfare $subThoroughfare".trim()
-                    } else {
-                        "위치 정보 없음"
-                    }
-                } catch (e: Exception) {
-                    Log.e("ApiService", "Geocoding failed", e)
-                    "위치 정보 없음"
-                }
-                
-                // Generate hashtags based on location and time
-                val hashtags = if (locationAddress != "위치 정보 없음") {
-                    "#${locationAddress.split(" ")[0]} #사진"
-                } else {
-                    "#사진"
-                }
+                // Log the location information being used
+                Log.d("ApiService", "Using location: $latitude, $longitude")
+                Log.d("ApiService", "Address: $locationAddress")
                 
                 val jsonObject = JSONObject().apply {
                     put("fileName", inputString)
@@ -451,7 +395,7 @@ class ApiService {
                     put("memo", memo)
                     put("address", locationAddress)
                     put("regionName", regionName)
-                    put("capturedAt", capturedAt)
+                    put("capturedAt", finalCapturedAt)
                     put("version", type)
                 }
 
