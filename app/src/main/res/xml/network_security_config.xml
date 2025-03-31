@@ -9,5 +9,6 @@
         <!-- Allow cleartext traffic to your specific servers -->
         <domain includeSubdomains="true">10.0.1.13</domain>
         <domain includeSubdomains="true">192.168.50.70</domain>
+        <domain includeSubdomains="true">101.101.211.71</domain>
     </domain-config>
 </network-security-config>
