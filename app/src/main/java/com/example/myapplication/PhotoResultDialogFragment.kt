@@ -11,10 +11,13 @@ import android.content.Context.MODE_PRIVATE
 import android.content.pm.PackageManager
 import android.database.Cursor
 import android.graphics.*
+import android.location.Geocoder
+import android.location.LocationManager
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -52,6 +55,15 @@ class PhotoResultDialogFragment : DialogFragment() {
     private var selectedIconColor: Int = Color.RED
     private var selectedIcon: Int = 0 // 0: 선택 없음, 1-5: 아이콘 번호
     private var isDrawMode: Boolean = true // true: 그리기 모드, false: 아이콘 모드
+    
+    // Location information variables
+    private var latitude: Double = 37.5665  // Default to Seoul if no location available
+    private var longitude: Double = 126.978
+    private var altitude: Double = 10.5
+    private var locationAddress: String = "위치 정보 없음"
+    private var capturedAt: String = ""
+    private var resolution: String = "1920x1080"
+    private var hashtags: String = "#사진"
     
     // Callback for permission result
     private var permissionResultCallback: ((Boolean) -> Unit)? = null
@@ -102,6 +114,9 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
         
         // 스피너 설정
         setupIconSpinner()
+        
+        // Gather location information when view is created
+        gatherLocationInformation()
 
         // 화면에 그대로 전시
         photoBitmap?.let {
@@ -230,6 +245,76 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
                 ) == PackageManager.PERMISSION_GRANTED
     }
     
+    // Gather location information when view is created
+    private fun gatherLocationInformation() {
+        try {
+            // Get the current time for capturedAt
+            capturedAt = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+            
+            // Get image resolution from bitmap
+            photoBitmap?.let { bitmap ->
+                resolution = "${bitmap.width}x${bitmap.height}"
+            }
+            
+            // Check if we have location permission
+            if (checkLocationPermissions()) {
+                val locationManager = requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager
+                
+                try {
+                    // Try to get last known location from GPS or network
+                    val gpsLocation = locationManager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
+                    val networkLocation = locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
+                    
+                    // Use the most recent location
+                    val deviceLocation = when {
+                        gpsLocation != null && networkLocation != null -> 
+                            if (gpsLocation.time > networkLocation.time) gpsLocation else networkLocation
+                        gpsLocation != null -> gpsLocation
+                        networkLocation != null -> networkLocation
+                        else -> null
+                    }
+                    
+                    if (deviceLocation != null) {
+                        latitude = deviceLocation.latitude
+                        longitude = deviceLocation.longitude
+                        altitude = deviceLocation.altitude
+                        Log.d("PhotoResultDialog", "Using device location: $latitude, $longitude")
+                        
+                        // Get location address using Geocoder
+                        val geocoder = Geocoder(requireContext(), Locale.KOREA)
+                        try {
+                            val addresses = geocoder.getFromLocation(latitude, longitude, 1)
+                            if (addresses != null && addresses.isNotEmpty()) {
+                                val address = addresses[0]
+                                val adminArea = address.adminArea ?: ""
+                                val locality = address.locality ?: ""
+                                val thoroughfare = address.thoroughfare ?: ""
+                                val subThoroughfare = address.subThoroughfare ?: ""
+                                locationAddress = "$adminArea $locality $thoroughfare $subThoroughfare".trim()
+                                
+                                // Generate hashtags based on location
+                                if (locationAddress != "위치 정보 없음") {
+                                    val firstPart = locationAddress.split(" ").firstOrNull() ?: ""
+                                    if (firstPart.isNotEmpty()) {
+                                        hashtags = "#$firstPart #사진"
+                                    }
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Log.e("PhotoResultDialog", "Geocoding failed", e)
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e("PhotoResultDialog", "Error getting device location", e)
+                }
+            } else {
+                Log.d("PhotoResultDialog", "No location permission, using default values")
+            }
+        } catch (e: Exception) {
+            Log.e("PhotoResultDialog", "Error gathering location information", e)
+        }
+    }
+    
     // Location permission request code
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
     
@@ -275,6 +360,7 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
                 } else {
                     photoBitmap
                 }
+                
                 
                 // Launch a coroutine to handle the uploads
                 lifecycleScope.launch {
@@ -354,41 +440,6 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
         }
     }
 
-    private fun getFileUriFromPath(filePath: String): Uri? {
-        val file = File(filePath)
-        return Uri.fromFile(file)
-    }
-    private fun uploadImage(uri: Uri, fileName:String, memoText: String = "" ) {
-        // URI에서 실제 파일 경로 얻기
-        val filePath = getRealFilePathFromUri(uri)
-
-        if (filePath != null) {
-            val file = File(filePath)
-            if (file.exists()) {
-                var incidentId = IncidentManager.incidentId
-                val prefs = requireContext().getSharedPreferences("MyAppPrefs", Context.MODE_PRIVATE)
-                val creatorId = prefs.getString("ANDROID_ID", null)
-                val regionName = prefs.getString("CITY", null)
-                lifecycleScope.launch {
-                    ApiService.uploadFileToCloud(
-                        context = requireContext(),
-                        fileUri = Uri.fromFile(file),
-                        fileName = fileName,
-                        memoText = memoText,
-                        incidentId = incidentId,
-                        creatorId = creatorId,
-                        regionName = regionName
-                    )
-                }
-
-            } else {
-                Toast.makeText(context, "파일이 존재하지 않습니다.", Toast.LENGTH_SHORT).show()
-            }
-        } else {
-            Toast.makeText(context, "잘못된 파일 경로입니다.", Toast.LENGTH_SHORT).show()
-        }
-    }
-    
     // New method that returns a Boolean indicating success/failure and waits for upload to complete
     private suspend fun uploadImageAsync(uri: Uri, fileName: String, memoText: String = ""): Boolean {
         val filePath = getRealFilePathFromUri(uri)
@@ -410,7 +461,14 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
                         memoText = memoText,
                         incidentId = incidentId,
                         creatorId = creatorId,
-                        regionName = regionName
+                        regionName = regionName,
+                        latitude = latitude,
+                        longitude = longitude,
+                        altitude = altitude,
+                        locationAddress = locationAddress,
+                        capturedAt = capturedAt,
+                        resolution = resolution,
+                        hashtags = hashtags
                     )
                     return true
                 } catch (e: Exception) {
