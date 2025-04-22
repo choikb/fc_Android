@@ -36,7 +36,7 @@
 
         <!-- 로그인 화면 (앱 실행 시 첫 진입 액티비티) -->
         <activity
-            android:name=".LoginActivity"
+            android:name=".activity.LoginActivity"
             android:exported="true"
             android:theme="@style/Theme.MyApplication">
             <intent-filter>
@@ -45,23 +45,34 @@
             </intent-filter>
         </activity>
 
-        <activity android:name=".RegistrationActivity" />
+        <activity android:name=".activity.RegistrationActivity" />
 
         <!-- 메인 메뉴 화면 -->
         <activity
-            android:name=".MainMenuActivity"
+            android:name=".activity.MainMenuActivity"
             android:exported="true"
             android:theme="@style/Theme.MyApplication" />
 
         <!-- 촬영 화면 (CameraX 사용) -->
         <activity
-            android:name=".CaptureActivity"
+            android:name=".activity.CaptureActivity"
             android:exported="true"
             android:theme="@style/Theme.MyApplication" />
 
         <!-- 사진/영상 선택 화면 -->
         <activity
-            android:name=".SelectMediaActivity"
+            android:name=".activity.SelectMediaActivity"
+            android:exported="true"
+            android:theme="@style/Theme.MyApplication" />
+
+
+        <activity
+            android:name=".activity.Report1Activity"
+            android:exported="true"
+            android:theme="@style/Theme.MyApplication" />
+
+        <activity
+            android:name=".activity.Report2Activity"
             android:exported="true"
             android:theme="@style/Theme.MyApplication" />
 

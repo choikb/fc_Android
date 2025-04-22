@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="16dp"
+    >
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp"
+        >
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="발생개요"
+            android:textStyle="bold"
+            android:textSize="24sp"
+            android:textAlignment="center"
+            android:textColor="#222222"
+            android:paddingBottom="4dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="일시"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:paddingBottom="4dp" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="일시 입력"
+            android:text="2024년 12월 15일(일) 20:33:01(신고접수)"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="장소"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:paddingBottom="4dp" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="충청남도 홍성군 홍성읍 흥덕서로 78"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="대상"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:paddingBottom="4dp" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="자동차(승용자동차) / 소유자 : 000(남, 00년생)"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="개요"
+            android:textSize="14sp"
+            android:textColor="#666666"
+            android:paddingBottom="4dp" />
+
+        <EditText
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="목격자 000은 운동 중 ‘펑’ 소리가 들려 확인해 보니 주차되어 있는 차량에서 화염이 발생하여 119에 신고"/>
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true"
+        android:gravity="center">
+        <Button
+            android:id="@+id/prev"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:text="취소"
+            android:textSize="22sp"
+            android:backgroundTint="#F44336"
+            android:textColor="#FFFFFF"
+            android:elevation="4dp" />
+        <Button
+            android:id="@+id/next"
+            android:layout_width="0dp"
+            android:layout_height="50dp"
+            android:layout_weight="1"
+            android:text="다음"
+            android:textSize="22sp"
+            android:backgroundTint="#4CAF50"
+            android:textColor="#FFFFFF"
+            android:elevation="4dp" />
+    </LinearLayout>
+
+</RelativeLayout>

@@ -171,7 +171,7 @@
                 android:layout_height="wrap_content"
                 android:hint="신규 사건명 입력"
                 android:textSize="16sp"
-                android:text="" />  <!-- 기존 입력된 데이터가 남지 않도록 초기화 -->
+                android:text="충청남도 홍성군 홍성읍 화재발생" />  <!-- 기존 입력된 데이터가 남지 않도록 초기화 -->
 
             <Spinner
                 android:id="@+id/spinnerExistingCase"

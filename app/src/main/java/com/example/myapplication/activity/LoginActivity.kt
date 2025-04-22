@@ -1,13 +1,11 @@
-package com.example.myapplication
+package com.example.myapplication.activity
 
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
-import android.net.Uri
 import android.os.Build
 import android.os.Bundle
-import android.os.Environment
 import android.provider.Settings
 import android.text.Editable
 import android.text.TextWatcher
@@ -27,17 +25,16 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
 import androidx.preference.PreferenceManager
+import com.example.myapplication.ApiClient
+import com.example.myapplication.IncidentManager
+import com.example.myapplication.R
 import com.example.myapplication.api.ApiService
-import com.example.myapplication.model.FireStation
-import com.example.myapplication.model.User
-import com.google.android.gms.common.api.Api
 import kotlinx.coroutines.launch
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.io.IOException
-import java.util.concurrent.TimeUnit
 
 class LoginActivity : AppCompatActivity() {
 
@@ -158,7 +155,11 @@ class LoginActivity : AppCompatActivity() {
                     if (success) {
                         setupExistingCaseSpinner(IncidentManager.recentIncidents)
                     } else {
-                        Toast.makeText(this@LoginActivity, "사건 데이터를 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(
+                            this@LoginActivity,
+                            "사건 데이터를 불러오지 못했습니다.",
+                            Toast.LENGTH_SHORT
+                        ).show()
                     }
                 }
             }

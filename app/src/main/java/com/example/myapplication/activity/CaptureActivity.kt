@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.activity
 
 import android.Manifest
 import android.content.Context
@@ -22,7 +22,8 @@ import android.media.ExifInterface
 import android.hardware.camera2.CameraCharacteristics
 import android.hardware.camera2.CameraManager
 import android.util.Size
-import android.view.Surface
+import com.example.myapplication.PhotoResultDialogFragment
+import com.example.myapplication.R
 import java.io.ByteArrayInputStream
 import java.io.IOException
 

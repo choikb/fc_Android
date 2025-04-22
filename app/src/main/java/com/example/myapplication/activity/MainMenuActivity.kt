@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.activity
 
 import android.content.Intent
 import android.os.Bundle
@@ -7,6 +7,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.preference.PreferenceManager
+import com.example.myapplication.R
 
 class MainMenuActivity : AppCompatActivity() {
 
@@ -92,17 +93,15 @@ class MainMenuActivity : AppCompatActivity() {
         // 보고서 작성 화면 이동
         buttonWriteReport.setOnClickListener {
             // 임시로 토스트 메세지 표시 (추후 ReportActivity 구현 예정)
-            android.widget.Toast.makeText(this, "보고서 작성 기능은 추후 추가될 예정입니다.", android.widget.Toast.LENGTH_SHORT).show()
+            //android.widget.Toast.makeText(this, "보고서 작성 기능은 추후 추가될 예정입니다.", android.widget.Toast.LENGTH_SHORT).show()
             
             // 추후 아래 코드 사용 예정
-            /*
-            val intent = Intent(this, ReportActivity::class.java).apply {
+            val intent = Intent(this, Report1Activity::class.java).apply {
                 putExtra("AFFILIATION", affiliation)
                 putExtra("NAME", name)
                 putExtra("CASE_NAME", caseName)
             }
             startActivity(intent)
-            */
         }
 
         // 홈 버튼 - 로그인 화면으로 돌아가기

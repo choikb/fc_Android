@@ -1,4 +1,4 @@
-package com.example.myapplication
+package com.example.myapplication.activity
 
 import android.content.Context
 import android.content.Intent
@@ -13,10 +13,9 @@ import android.util.Log
 import android.view.View
 import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
+import com.example.myapplication.R
 import com.example.myapplication.api.ApiService
 import com.example.myapplication.model.FireStation
-import kotlinx.coroutines.launch
 
 class RegistrationActivity : AppCompatActivity() {
 
