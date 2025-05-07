@@ -38,11 +38,31 @@ import java.io.IOException
 
 class Report1Activity : AppCompatActivity() {
 
+    private lateinit var timeEditText: EditText
+    private lateinit var locationEditText: EditText
+    private lateinit var targetEditText: EditText
+    private lateinit var summaryEditText: EditText
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_report1)
-        var prev: Button = findViewById(R.id.prev)
-        var next: Button = findViewById(R.id.next)
+        
+        // Initialize EditText fields
+        timeEditText = findViewById<EditText>(R.id.time_edit_text)
+        locationEditText = findViewById<EditText>(R.id.location_edit_text)
+        targetEditText = findViewById<EditText>(R.id.target_edit_text)
+        summaryEditText = findViewById<EditText>(R.id.summary_edit_text)
+        
+        // Initialize buttons
+        val loadButton: Button = findViewById(R.id.btn_load)
+        val prev: Button = findViewById(R.id.prev)
+        val next: Button = findViewById(R.id.next)
+        
+        // Set click listener for load button
+        loadButton.setOnClickListener {
+            loadHardcodedData()
+        }
+        
         prev.setOnClickListener {
             super.onBackPressed()
         }
@@ -50,5 +70,16 @@ class Report1Activity : AppCompatActivity() {
             val intent = Intent(this, Report2Activity::class.java).apply {}
             startActivity(intent)
         }
+    }
+    
+    private fun loadHardcodedData() {
+        // Load hardcoded data into the fields
+        timeEditText.setText("2025.1.1 05:58 (신고접수)")
+        locationEditText.setText("충청남도 홍성군 결성면 무량리 492")
+        // Clear other fields
+        targetEditText.setText("")
+        summaryEditText.setText("")
+        
+        Toast.makeText(this, "데이터를 불러왔습니다.", Toast.LENGTH_SHORT).show()
     }
 }
