@@ -525,47 +525,44 @@ override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, saved
     }
     
     private fun setupIconSpinner() {
-        // 스피너 아이템 설정
-        val items = arrayOf("선택", "1", "2", "3", "4", "5")
-        val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, items)
-        spinnerIconSelect.adapter = adapter
-        
-        // 스피너 선택 이벤트 처리
-        spinnerIconSelect.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
-            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                // 현재 메모와 색상 저장
-                if (selectedIcon > 0) {
-                    saveCurrentMemo()
-                    saveCurrentIconColor()
-                }
-                
-                // 아이콘 번호 업데이트 (0은 선택없음, 1-5는 아이콘 번호)
-                selectedIcon = position
-                
-                if (position > 0) {
-                    // 아이콘 모드로 전환 (선택이 있을 때만)
-                    setDrawMode(false)
-                    // 저장된 메모와 색상 불러오기
-                    loadMemoForCurrentIcon()
-                    loadColorForCurrentIcon()
-                    // 메모 필드 활성화
-                    editTextMemo.isEnabled = true
-                } else {
-                    // 그리기 모드로 전환 (선택이 없을 때)
-                    setDrawMode(true)
-                    // 메모 필드 비활성화 및 비우기
-                    editTextMemo.setText("")
-                    editTextMemo.isEnabled = false
-                }
+    // 스피너 아이템 설정 - "선택" 옵션 제거
+    val items = arrayOf("1", "2", "3", "4", "5")
+    val adapter = ArrayAdapter(requireContext(), android.R.layout.simple_spinner_dropdown_item, items)
+    spinnerIconSelect.adapter = adapter
+    
+    // 스피너 선택 이벤트 처리
+    spinnerIconSelect.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+        override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+            // 현재 메모와 색상 저장
+            if (selectedIcon > 0) {
+                saveCurrentMemo()
+                saveCurrentIconColor()
             }
             
-            override fun onNothingSelected(parent: AdapterView<*>?) {
-                // 아무것도 선택되지 않았을 때
-                setDrawMode(true)
-            }
+            // 아이콘 번호 업데이트 (position + 1로 실제 아이콘 번호 계산)
+            selectedIcon = position + 1  // 인덱스를 실제 아이콘 번호로 변환 (1-5)
+            
+            // 항상 아이콘 모드로 전환 ("선택" 옵션이 없으므로)
+            setDrawMode(false)
+            // 저장된 메모와 색상 불러오기
+            loadMemoForCurrentIcon()
+            loadColorForCurrentIcon()
+            // 메모 필드 활성화
+            editTextMemo.isEnabled = true
+        }
+        
+        override fun onNothingSelected(parent: AdapterView<*>?) {
+            // 아무것도 선택되지 않았을 때 - 기본값으로 첫 번째 아이콘(1) 선택
+            selectedIcon = 1
+            setDrawMode(false)
+            editTextMemo.isEnabled = true
         }
     }
     
+    // 기본값으로 첫 번째 항목("1") 선택
+    spinnerIconSelect.setSelection(0)
+}
+
     private fun setDrawMode(drawMode: Boolean) {
         isDrawMode = drawMode
         
